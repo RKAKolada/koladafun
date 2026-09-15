@@ -4,50 +4,79 @@
 \alias{hamta_fran_kolada}
 \title{Hämta data från Kolada}
 \usage{
-hamta_fran_kolada(nyckeltal, kommun, ar, kon = NULL, page = 1, per_page = 5000)
+hamta_fran_kolada(
+  nyckeltal,
+  kommun = NULL,
+  ar = NULL,
+  kon = NULL,
+  kommuntyp = NULL,
+  per_page = 5000
+)
 }
 \arguments{
 \item{nyckeltal}{Ett eller flera nyckeltals-ID från Kolada,
 exempelvis \code{"N01926"} eller \code{c("N01926", "N17454")}.}
 
-\item{kommun}{En eller flera kommunkoder,
-exempelvis \code{"0180"} eller \code{c("0180", "0136")}.}
+\item{kommun}{Valfritt. En eller flera kommunkoder eller kommun-/regionnamn,
+exempelvis \code{"0136"}, \code{"Haninge"} eller
+\code{c("Haninge", "0180")}.
+Om NULL hämtas samtliga områden.}
 
-\item{ar}{Ett eller flera år,
-exempelvis \code{2025} eller \code{2020:2025}.}
+\item{ar}{Valfritt. Ett eller flera år,
+exempelvis \code{2025} eller \code{2020:2025}.
+Om NULL hämtas samtliga tillgängliga år.}
 
-\item{kon}{Valfritt filter för kön. Ange \code{"T"} för total,
-\code{"K"} för kvinnor, \code{"M"} för män eller exempelvis
-\code{c("K", "M")} för båda könen. Standard är \code{NULL},
-vilket innebär att alla tillgängliga kön returneras.}
+\item{kon}{Valfritt filter för kön.
+\code{"T"} = total, \code{"K"} = kvinnor och \code{"M"} = män.
+Flera värden kan anges, exempelvis \code{c("K", "M")}.
+Om NULL returneras alla tillgängliga kön.}
 
-\item{page}{Sidnummer i Koladas API. Standard är 1.}
+\item{kommuntyp}{Valfritt filter för områdestyp.
+\code{"K"} = kommun och \code{"R"} = region.
+Flera kan anges med \code{c("K", "R")}.}
 
-\item{per_page}{Antal observationer per sida. Standard är 5000.}
+\item{per_page}{Antal observationer per sida i API-anropet.
+Standard är 5000.}
 }
 \value{
-En data.frame med kommun, kommunnamn, nyckeltals-ID,
-nyckeltalsnamn, år, värde, kön och status.
+En data.frame med områdeskod, områdesnamn,
+nyckeltals-ID, nyckeltalsnamn, år, värde, kön och status.
 }
 \description{
-Hämtar data från Koladas API för ett eller flera nyckeltal,
-kommuner och år. Det går även att filtrera resultatet efter kön.
+Hämtar data från Koladas API för ett eller flera nyckeltal.
+Kommun/region, år, kön och områdestyp kan filtreras valfritt.
+}
+\details{
+Om kommun inte anges hämtas samtliga tillgängliga områden.
+Om år inte anges hämtas samtliga tillgängliga år.
+
+Kommun kan anges antingen med kommunkod eller kommunnamn,
+exempelvis \code{"0136"} eller \code{"Haninge"}.
 }
 \examples{
 \dontrun{
+
 hamta_fran_kolada(
-  nyckeltal = "N01926",
-  kommun = "0180",
-  ar = 2025,
-  kon = "T"
+  nyckeltal = "N01926"
 )
 
 hamta_fran_kolada(
-  nyckeltal = c("N01926", "N17454"),
-  kommun = c("0180", "0136"),
-  ar = 2024:2025,
-  kon = c("K", "M")
+  nyckeltal = "N01926",
+  kommun = "Haninge"
 )
+
+hamta_fran_kolada(
+  nyckeltal = "N01926",
+  kommuntyp = "K"
+)
+
+hamta_fran_kolada(
+  nyckeltal = "N01926",
+  kommun = "Haninge",
+  ar = 2020:2025,
+  kon = "K"
+)
+
 }
 
 }
