@@ -58,4 +58,4 @@ data <- hamta_fran_kolada(
 )
 ```
 
-`kon` kan anges som `"T"` för total, `"K"` för kvinnor och `"M"` för män.
+`kon` kan anges som `"T"` för total, `"K"` för kvinnor, `"M"` för män eller inte specificeras för att hämta alla tre.
