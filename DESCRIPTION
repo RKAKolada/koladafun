@@ -1,0 +1,18 @@
+Package: koladafun
+Title: Funktioner för Koladata
+Version: 0.0.1
+Authors@R: 
+    person(
+        given = "Nejdet",
+        family = "Eken",
+        email = "nejdet.eken@rka.nu",
+        role = c("aut", "cre")
+    )
+Description: Hjälpfunktioner för mer strukturerade hämtningar av statistik
+    från databasen Kolada.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Imports: 
+    jsonlite
+Config/roxygen2/version: 8.1.0
