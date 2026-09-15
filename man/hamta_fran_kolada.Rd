@@ -10,7 +10,8 @@ hamta_fran_kolada(
   ar = NULL,
   kon = NULL,
   kommuntyp = NULL,
-  per_page = 5000
+  per_page = 5000,
+  batch_size = 25
 )
 }
 \arguments{
@@ -37,6 +38,9 @@ Flera kan anges med \code{c("K", "R")}.}
 
 \item{per_page}{Antal observationer per sida i API-anropet.
 Standard är 5000.}
+
+\item{batch_size}{Antal kommuner/regioner som hämtas per API-anrop.
+Standard är 50.}
 }
 \value{
 En data.frame med områdeskod, områdesnamn,

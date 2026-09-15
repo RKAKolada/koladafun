@@ -33,6 +33,9 @@
 #' @param per_page Antal observationer per sida i API-anropet.
 #'   Standard är 5000.
 #'
+#' @param batch_size Antal kommuner/regioner som hämtas per API-anrop.
+#'   Standard är 50.
+#'
 #' @return En data.frame med områdeskod, områdesnamn,
 #'   nyckeltals-ID, nyckeltalsnamn, år, värde, kön och status.
 #'
@@ -69,7 +72,8 @@ hamta_fran_kolada <- function(
     ar = NULL,
     kon = NULL,
     kommuntyp = NULL,
-    per_page = 5000
+    per_page = 5000,
+    batch_size = 25
 ) {
 
   if (missing(nyckeltal) || length(nyckeltal) == 0) {
@@ -80,10 +84,7 @@ hamta_fran_kolada <- function(
 
   # Hämta metadata för kommuner och regioner
   kommun_svar <- jsonlite::fromJSON(
-    paste0(
-      "https://api.kolada.se/v3/municipality",
-      "?page=1&per_page=5000"
-    )
+    "https://api.kolada.se/v3/municipality?page=1&per_page=5000"
   )
 
   kommuner <- as.data.frame(kommun_svar$values)
@@ -174,6 +175,31 @@ hamta_fran_kolada <- function(
     ]
   }
 
+  # Kontrollera kön tidigt
+  if (!is.null(kon)) {
+
+    kon <- toupper(as.character(kon))
+
+    giltiga_kon <- c(
+      "T",
+      "K",
+      "M"
+    )
+
+    ogiltiga_kon <- setdiff(
+      kon,
+      giltiga_kon
+    )
+
+    if (length(ogiltiga_kon) > 0) {
+      stop(
+        "Ogiltigt värde för kön: ",
+        paste(ogiltiga_kon, collapse = ", "),
+        ". Använd T, K eller M."
+      )
+    }
+  }
+
   # Hjälpfunktion för pagination
   hamta_sidor <- function(url) {
 
@@ -251,48 +277,97 @@ hamta_fran_kolada <- function(
     kpi_metadata
   )
 
-  # Skapa kombinationer av KPI och område
-  kombinationer <- expand.grid(
-    nyckeltal = nyckeltal,
-    kommun = kommuner$id,
-    stringsAsFactors = FALSE
+  # Dela områden i batchar
+  kommun_batchar <- split(
+    kommuner$id,
+    ceiling(
+      seq_along(kommuner$id) / batch_size
+    )
   )
+
+  # Dela år i mindre batchar om användaren angett år
+  if (is.null(ar)) {
+
+    ar_batchar <- list(NULL)
+
+  } else {
+
+    ar <- as.character(ar)
+
+    ar_batchar <- split(
+      ar,
+      ceiling(
+        seq_along(ar) / 20
+      )
+    )
+  }
 
   # Hämta data
-  resultat <- lapply(
-    seq_len(nrow(kombinationer)),
-    function(i) {
+  resultat <- list()
+  index <- 1
 
-      kpi_id <- kombinationer$nyckeltal[i]
-      kommun_id <- kombinationer$kommun[i]
+  for (kpi_id in nyckeltal) {
 
-      # Hämta alla tillgängliga år.
-      # Årsfiltreringen görs lokalt efter hämtningen.
-      url <- paste0(
-        "https://api.kolada.se/v3/data/kpi/",
-        kpi_id,
-        "/municipality/",
-        kommun_id
+    for (kommun_batch in kommun_batchar) {
+
+      kommun_del <- paste(
+        kommun_batch,
+        collapse = ","
       )
 
-      svar_lista <- hamta_sidor(url)
+      for (ar_batch in ar_batchar) {
 
-      if (length(svar_lista) == 0) {
-        return(NULL)
-      }
+        url <- paste0(
+          "https://api.kolada.se/v3/data/kpi/",
+          kpi_id,
+          "/municipality/",
+          kommun_del
+        )
 
-      data_lista <- lapply(
-        svar_lista,
-        function(x) {
+        if (!is.null(ar_batch)) {
 
-          data.frame(x) |>
-            tidyr::unnest(values)
+          url <- paste0(
+            url,
+            "/year/",
+            paste(
+              ar_batch,
+              collapse = ","
+            )
+          )
         }
-      )
 
-      dplyr::bind_rows(data_lista)
+        svar_lista <- tryCatch(
+          hamta_sidor(url),
+          error = function(e) {
+            NULL
+          }
+        )
+
+        if (
+          is.null(svar_lista) ||
+          length(svar_lista) == 0
+        ) {
+          next
+        }
+
+        data_lista <- lapply(
+          svar_lista,
+          function(x) {
+
+            data.frame(x) |>
+              tidyr::unnest(values)
+
+          }
+        )
+
+        resultat[[index]] <- dplyr::bind_rows(
+          data_lista
+        )
+
+        index <- index + 1
+      }
     }
-  )
+  }
 
   # Slå ihop resultat
   data <- dplyr::bind_rows(
@@ -300,28 +375,29 @@ hamta_fran_kolada <- function(
   )
 
   if (nrow(data) == 0) {
-    message("Ingen data hittades.")
+
+    message(
+      "Ingen data hittades för de valda kriterierna."
+    )
+
     return(data.frame())
   }
 
-  # Filtrera på valda år
+  # Kontrollera vilka efterfrågade år som faktiskt finns
   if (!is.null(ar)) {
 
-    ar <- as.character(ar)
+    begarda_ar <- unique(
+      as.character(ar)
+    )
 
     tillgangliga_ar <- unique(
       as.character(data$period)
     )
 
     saknade_ar <- setdiff(
-      ar,
+      begarda_ar,
       tillgangliga_ar
     )
-
-    data <- data |>
-      dplyr::filter(
-        as.character(period) %in% ar
-      )
 
     if (length(saknade_ar) > 0) {
 
@@ -333,13 +409,6 @@ hamta_fran_kolada <- function(
         ),
         ". Tillgängliga år har hämtats."
       )
-    }
-
-    if (nrow(data) == 0) {
-      message(
-        "Ingen data finns för något av de valda åren."
-      )
-      return(data.frame())
     }
   }
 
@@ -363,29 +432,6 @@ hamta_fran_kolada <- function(
 
   # Filtrera kön
   if (!is.null(kon)) {
-
-    kon <- toupper(
-      as.character(kon)
-    )
-
-    giltiga_kon <- c(
-      "T",
-      "K",
-      "M"
-    )
-
-    ogiltiga_kon <- setdiff(
-      kon,
-      giltiga_kon
-    )
-
-    if (length(ogiltiga_kon) > 0) {
-      stop(
-        "Ogiltigt värde för kön: ",
-        paste(ogiltiga_kon, collapse = ", "),
-        ". Använd T, K eller M."
-      )
-    }
 
     data <- data |>
       dplyr::filter(
@@ -411,6 +457,8 @@ hamta_fran_kolada <- function(
       period,
       gender
     )
+
+  rownames(data) <- NULL
 
   return(
     as.data.frame(data)
