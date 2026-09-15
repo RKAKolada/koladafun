@@ -16,3 +16,5 @@ Roxygen: list(markdown = TRUE)
 Imports: 
     jsonlite
 Config/roxygen2/version: 8.1.0
+URL: https://github.com/RKAKolada/koladafun
+BugReports: https://github.com/RKAKolada/koladafun/issues
