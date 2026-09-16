@@ -1,6 +1,6 @@
 # koladafun
 
-Ett R-paket med funktioner för att enkelt hämta data från Kolada.
+Ett R-paket med funktioner för att söka, utforska och hämta data från Kolada.
 
 ## Installation
 
@@ -189,4 +189,271 @@ Mer information om funktionen finns även i R:
 
 ```r
 ?hamta_fran_kolada
+```
+
+## Fler funktioner
+
+Utöver `hamta_fran_kolada()` finns flera hjälpfunktioner för att hitta nyckeltal, läsa metadata, lista kommuner och regioner samt identifiera tillgängliga år och senaste värden.
+
+### Sök efter nyckeltal
+
+Om du inte känner till ett nyckeltals-ID kan du söka efter nyckeltal med `sok_nyckeltal()`.
+
+```r
+sok_nyckeltal("förskola")
+```
+
+Det går även att använda flera sökord:
+
+```r
+sok_nyckeltal("kostnad förskola")
+```
+
+Sökningen görs bland annat i nyckeltalets ID, namn och beskrivning.
+
+Antalet träffar kan begränsas med `max_resultat`:
+
+```r
+sok_nyckeltal(
+  "förskola",
+  max_resultat = 20
+)
+```
+
+Det går också att söka direkt på ett nyckeltals-ID:
+
+```r
+sok_nyckeltal("N01926")
+```
+
+Mer information:
+
+```r
+?sok_nyckeltal
+```
+
+### Visa information om ett nyckeltal
+
+Med `info_nyckeltal()` kan metadata för ett eller flera nyckeltal hämtas.
+
+```r
+info_nyckeltal("N01926")
+```
+
+Flera nyckeltal kan anges samtidigt:
+
+```r
+info_nyckeltal(
+  c("N01926", "N17454")
+)
+```
+
+Funktionen returnerar den metadata som finns tillgänglig för nyckeltalen i Kolada, exempelvis namn och beskrivning.
+
+Mer information:
+
+```r
+?info_nyckeltal
+```
+
+### Hämta kommuner och regioner
+
+Med `hamta_kommuner()` kan en lista över kommuner och regioner hämtas.
+
+Alla områden:
+
+```r
+hamta_kommuner()
+```
+
+Endast kommuner:
+
+```r
+hamta_kommuner(
+  typ = "K"
+)
+```
+
+Endast regioner:
+
+```r
+hamta_kommuner(
+  typ = "R"
+)
+```
+
+Det går även att söka efter ett namn eller en kod:
+
+```r
+hamta_kommuner(
+  sok = "Han"
+)
+```
+
+Filtrering och sökning kan kombineras:
+
+```r
+hamta_kommuner(
+  typ = "K",
+  sok = "Han"
+)
+```
+
+`typ` kan anges som:
+
+- `"K"` = kommun
+- `"R"` = region
+
+Mer information:
+
+```r
+?hamta_kommuner
+```
+
+### Visa tillgängliga år
+
+Med `tillgangliga_ar()` kan du kontrollera vilka år som har data för ett visst nyckeltal.
+
+```r
+tillgangliga_ar("N01926")
+```
+
+Det går också att begränsa sökningen till en viss kommun eller region:
+
+```r
+tillgangliga_ar(
+  "N01926",
+  kommun = "Haninge"
+)
+```
+
+Kommun kan anges med namn eller kod:
+
+```r
+tillgangliga_ar(
+  "N01926",
+  kommun = "0136"
+)
+```
+
+Det går även att begränsa resultatet till kommuner eller regioner:
+
+```r
+tillgangliga_ar(
+  "N01926",
+  kommuntyp = "K"
+)
+```
+
+Mer information:
+
+```r
+?tillgangliga_ar
+```
+
+### Hämta senaste tillgängliga värde
+
+Med `senaste_varde()` kan det senaste tillgängliga värdet för ett nyckeltal hämtas utan att användaren själv behöver veta vilket det senaste publicerade året är.
+
+```r
+senaste_varde(
+  nyckeltal = "N01926",
+  kommun = "Haninge"
+)
+```
+
+Det går också att filtrera på kön:
+
+```r
+senaste_varde(
+  nyckeltal = "N01926",
+  kommun = "Haninge",
+  kon = "T"
+)
+```
+
+För flera kommuner:
+
+```r
+senaste_varde(
+  nyckeltal = "N01926",
+  kommun = c(
+    "Haninge",
+    "0180",
+    "Mjölby"
+  )
+)
+```
+
+Det går även att hämta senaste värdet för samtliga kommuner:
+
+```r
+senaste_varde(
+  nyckeltal = "N01926",
+  kommuntyp = "K"
+)
+```
+
+Det senaste året bestäms separat för varje kombination av nyckeltal, område och kön.
+
+Mer information:
+
+```r
+?senaste_varde
+```
+
+## Exempel på arbetsflöde
+
+Ett vanligt arbetsflöde kan vara att först söka efter ett nyckeltal, läsa dess metadata och därefter hämta data.
+
+```r
+# 1. Sök efter ett nyckeltal
+sok_nyckeltal("förskola")
+
+# 2. Läs mer om nyckeltalet
+info_nyckeltal("N01926")
+
+# 3. Kontrollera vilka år som finns
+tillgangliga_ar(
+  "N01926",
+  kommun = "Haninge"
+)
+
+# 4. Hämta data
+data <- hamta_fran_kolada(
+  nyckeltal = "N01926",
+  kommun = "Haninge",
+  ar = 2020:2025
+)
+```
+
+Alternativt kan det senaste publicerade värdet hämtas direkt:
+
+```r
+data <- senaste_varde(
+  nyckeltal = "N01926",
+  kommun = "Haninge"
+)
+```
+
+## Funktioner i paketet
+
+| Funktion | Beskrivning |
+|---|---|
+| `hamta_fran_kolada()` | Hämtar data från Kolada för valda nyckeltal, områden och år. |
+| `sok_nyckeltal()` | Söker efter nyckeltal utifrån ord, namn, beskrivning eller ID. |
+| `info_nyckeltal()` | Hämtar metadata för ett eller flera nyckeltal. |
+| `hamta_kommuner()` | Hämtar och söker bland kommuner och regioner. |
+| `tillgangliga_ar()` | Visar vilka år som har tillgängliga data för ett nyckeltal. |
+| `senaste_varde()` | Hämtar den senaste tillgängliga observationen. |
+
+Dokumentation för samtliga funktioner finns även direkt i R:
+
+```r
+?hamta_fran_kolada
+?sok_nyckeltal
+?info_nyckeltal
+?hamta_kommuner
+?tillgangliga_ar
+?senaste_varde
 ```
