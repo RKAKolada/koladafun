@@ -4,7 +4,13 @@
 \alias{senaste_varde}
 \title{Hämta senaste tillgängliga värde}
 \usage{
-senaste_varde(nyckeltal, kommun = NULL, kon = NULL, kommuntyp = NULL)
+senaste_varde(
+  nyckeltal,
+  kommun = NULL,
+  kon = NULL,
+  kommuntyp = NULL,
+  bortfall = FALSE
+)
 }
 \arguments{
 \item{nyckeltal}{Ett eller flera nyckeltals-ID.}
@@ -15,6 +21,11 @@ senaste_varde(nyckeltal, kommun = NULL, kon = NULL, kommuntyp = NULL)
 
 \item{kommuntyp}{Valfri områdestyp:
 \code{"K"} = kommun och \code{"R"} = region.}
+
+\item{bortfall}{Logiskt värde. Om \code{FALSE} hämtas senaste
+observationen där ett faktiskt värde finns. Om \code{TRUE}
+accepteras även observationer där värdet saknas, exempelvis
+på grund av bortfall eller sekretess. Standard är \code{FALSE}.}
 }
 \value{
 En data.frame med senaste tillgängliga observation.
@@ -32,6 +43,12 @@ nyckeltal, område och kön.
 senaste_varde(
   nyckeltal = "N01926",
   kommun = "Haninge"
+)
+
+senaste_varde(
+  nyckeltal = "N01926",
+  kommun = "Haninge",
+  bortfall = TRUE
 )
 }
 

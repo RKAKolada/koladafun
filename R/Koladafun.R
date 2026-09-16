@@ -895,6 +895,10 @@ tillgangliga_ar <- function(
 #' @param kon Valfritt kön: `"T"`, `"K"` eller `"M"`.
 #' @param kommuntyp Valfri områdestyp:
 #'   `"K"` = kommun och `"R"` = region.
+#' @param bortfall Logiskt värde. Om `FALSE` hämtas senaste
+#'   observationen där ett faktiskt värde finns. Om `TRUE`
+#'   accepteras även observationer där värdet saknas, exempelvis
+#'   på grund av bortfall eller sekretess. Standard är `FALSE`.
 #'
 #' @return En data.frame med senaste tillgängliga observation.
 #'
@@ -904,6 +908,12 @@ tillgangliga_ar <- function(
 #'   nyckeltal = "N01926",
 #'   kommun = "Haninge"
 #' )
+#'
+#' senaste_varde(
+#'   nyckeltal = "N01926",
+#'   kommun = "Haninge",
+#'   bortfall = TRUE
+#' )
 #' }
 #'
 #' @export
@@ -911,8 +921,17 @@ senaste_varde <- function(
     nyckeltal,
     kommun = NULL,
     kon = NULL,
-    kommuntyp = NULL
+    kommuntyp = NULL,
+    bortfall = FALSE
 ) {
+
+  if (
+    length(bortfall) != 1 ||
+    !is.logical(bortfall) ||
+    is.na(bortfall)
+  ) {
+    stop("'bortfall' måste vara TRUE eller FALSE.")
+  }
 
   data <- hamta_fran_kolada(
     nyckeltal = nyckeltal,
@@ -925,6 +944,26 @@ senaste_varde <- function(
     return(
       data.frame()
     )
+  }
+
+  # Om bortfall inte accepteras:
+  # behåll endast observationer där ett faktiskt värde finns
+  if (!bortfall) {
+
+    data <- data |>
+      dplyr::filter(
+        !is.na(value)
+      )
+
+    if (nrow(data) == 0) {
+      message(
+        "Inga observationer med ett faktiskt värde hittades."
+      )
+
+      return(
+        data.frame()
+      )
+    }
   }
 
   data <- data |>

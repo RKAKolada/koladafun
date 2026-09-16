@@ -396,6 +396,20 @@ senaste_varde(
 
 Det senaste året bestäms separat för varje kombination av nyckeltal, område och kön.
 
+Som standard används den senaste observationen där ett faktiskt värde finns. Om den senaste observationen är bortfall, sekretess eller av annan anledning saknar värde används istället det senaste året där ett värde finns.
+
+Om även observationer med bortfall eller sekretess ska accepteras kan `bortfall = TRUE` anges:
+
+```r
+senaste_varde(
+  nyckeltal = "N01926",
+  kommun = "Haninge",
+  bortfall = TRUE
+)
+```
+
+Med `bortfall = TRUE` returneras den senaste observationen även om `value` saknas. Information om exempelvis bortfall eller sekretess finns då kvar i kolumnen `status`.
+
 Mer information:
 
 ```r
