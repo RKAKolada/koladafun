@@ -402,6 +402,126 @@ Mer information:
 ?senaste_varde
 ```
 
+### Beräkna förändring mellan två år
+
+Med `forandring()` kan förändringen för ett eller flera nyckeltal mellan två år beräknas. Funktionen hämtar värdena för de två valda åren och beräknar både absolut och procentuell förändring.
+
+Exempel för en kommun:
+
+```r
+forandring(
+  nyckeltal = "N01926",
+  kommun = "Haninge",
+  fran = 2020,
+  till = 2025,
+  kon = "T"
+)
+```
+
+Resultatet innehåller bland annat:
+
+- värdet för startåret
+- värdet för slutåret
+- absolut förändring
+- procentuell förändring
+
+Funktionen kan även användas för flera kommuner och nyckeltal.
+
+Exempel för flera kommuner:
+
+```r
+forandring(
+  nyckeltal = "N01926",
+  kommun = c("Haninge", "Huddinge", "0180"),
+  fran = 2020,
+  till = 2025,
+  kon = "T"
+)
+```
+
+Det går också att beräkna förändringen för samtliga kommuner:
+
+```r
+forandring(
+  nyckeltal = "N01926",
+  kommuntyp = "K",
+  fran = 2020,
+  till = 2025,
+  kon = "T"
+)
+```
+
+Om ett värde saknas för något av jämförelseåren kan förändringen inte beräknas för den observationen. Procentuell förändring beräknas inte heller när startvärdet är 0.
+
+Mer information:
+
+```r
+?forandring
+```
+
+### Jämför en kommun med länets kommuner
+
+Med `hamta_jamforelse()` kan ett värde för en kommun jämföras med det ovägda medelvärdet för kommunerna i samma län.
+
+Kommunen kan anges med namn:
+
+```r
+hamta_jamforelse(
+  nyckeltal = "N01926",
+  kommun = "Haninge",
+  ar = 2025,
+  kon = "T"
+)
+```
+
+eller med kommunkod:
+
+```r
+hamta_jamforelse(
+  nyckeltal = "N01926",
+  kommun = "0136",
+  ar = 2025,
+  kon = "T"
+)
+```
+
+Funktionen identifierar automatiskt den länsgrupp som kommunen tillhör i Kolada och hämtar både kommunens värde och länsgruppens värde.
+
+Resultatet innehåller en kolumn `jamforelsetyp` som visar om observationen avser:
+
+- `"Kommun"` = den valda kommunen
+- `"Länets kommuner"` = ovägt medel för kommunerna i länet
+
+Flera år kan anges samtidigt:
+
+```r
+hamta_jamforelse(
+  nyckeltal = "N01926",
+  kommun = "Haninge",
+  ar = 2020:2025,
+  kon = "T"
+)
+```
+
+Det går även att ange flera nyckeltal:
+
+```r
+hamta_jamforelse(
+  nyckeltal = c("N01926", "N17454"),
+  kommun = "Haninge",
+  ar = 2025,
+  kon = "T"
+)
+```
+
+Observera att jämförelsevärdet avser Koladas kommungrupp för länets kommuner (ovägt medel), inte regionorganisationens eget värde.
+
+Mer information:
+
+```r
+?hamta_jamforelse
+```
+
 ## Exempel på arbetsflöde
 
 Ett vanligt arbetsflöde kan vara att först söka efter ett nyckeltal, läsa dess metadata och därefter hämta data.
@@ -446,6 +566,8 @@ data <- senaste_varde(
 | `hamta_kommuner()` | Hämtar och söker bland kommuner och regioner. |
 | `tillgangliga_ar()` | Visar vilka år som har tillgängliga data för ett nyckeltal. |
 | `senaste_varde()` | Hämtar den senaste tillgängliga observationen. |
+| `forandring()` | Beräknar absolut och procentuell förändring mellan två år. |
+| `hamta_jamforelse()` | Jämför en kommun med det ovägda medelvärdet för kommunerna i samma län. |
 
 Dokumentation för samtliga funktioner finns även direkt i R:
 
@@ -456,4 +578,6 @@ Dokumentation för samtliga funktioner finns även direkt i R:
 ?hamta_kommuner
 ?tillgangliga_ar
 ?senaste_varde
+?forandring
+?hamta_jamforelse
 ```

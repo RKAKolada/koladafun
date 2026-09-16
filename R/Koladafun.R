@@ -959,3 +959,473 @@ senaste_varde <- function(
   as.data.frame(data)
 }
 
+#' Beräkna förändring mellan två år
+#'
+#' Hämtar värden från Kolada för två valda år och beräknar
+#' både absolut och procentuell förändring.
+#'
+#' Funktionen kan användas för en eller flera kommuner,
+#' regioner och nyckeltal.
+#'
+#' @param nyckeltal Ett eller flera nyckeltals-ID från Kolada,
+#'   exempelvis `"N01926"` eller `c("N01926", "N17454")`.
+#'
+#' @param kommun Valfritt. En eller flera kommunkoder eller
+#'   kommun-/regionnamn, exempelvis `"0136"` eller `"Haninge"`.
+#'   Om NULL används alla områden.
+#'
+#' @param fran Det första året i jämförelsen.
+#'
+#' @param till Det sista året i jämförelsen.
+#'
+#' @param kon Valfritt filter för kön.
+#'   `"T"` = total, `"K"` = kvinnor och `"M"` = män.
+#'   Om NULL används alla tillgängliga kön.
+#'
+#' @param kommuntyp Valfritt filter för områdestyp.
+#'   `"K"` = kommun och `"R"` = region.
+#'
+#' @return En data.frame med värde för startår och slutår,
+#'   absolut förändring och procentuell förändring.
+#'
+#' @examples
+#' \dontrun{
+#'
+#' forandring(
+#'   nyckeltal = "N01926",
+#'   kommun = "Haninge",
+#'   fran = 2020,
+#'   till = 2025,
+#'   kon = "T"
+#' )
+#'
+#' forandring(
+#'   nyckeltal = "N01926",
+#'   kommuntyp = "K",
+#'   fran = 2020,
+#'   till = 2025,
+#'   kon = "T"
+#' )
+#'
+#' }
+#'
+#' @export
+forandring <- function(
+    nyckeltal,
+    kommun = NULL,
+    fran,
+    till,
+    kon = NULL,
+    kommuntyp = NULL
+) {
+
+  # Kontrollera år
+  if (missing(fran) || missing(till)) {
+    stop("Du måste ange både 'fran' och 'till'.")
+  }
+
+  if (length(fran) != 1 || length(till) != 1) {
+    stop("'fran' och 'till' måste vara ett år vardera.")
+  }
+
+  if (fran == till) {
+    stop("'fran' och 'till' måste vara olika år.")
+  }
+
+  # Hämta endast de två år som behövs
+  data <- hamta_fran_kolada(
+    nyckeltal = nyckeltal,
+    kommun = kommun,
+    ar = c(fran, till),
+    kon = kon,
+    kommuntyp = kommuntyp
+  )
+
+  if (nrow(data) == 0) {
+    message("Ingen data hittades för de valda kriterierna.")
+    return(data.frame())
+  }
+
+  # Säkerställ numeriska värden
+  data <- data |>
+    dplyr::mutate(
+      period = as.character(period),
+      value = as.numeric(value)
+    )
+
+  fran_chr <- as.character(fran)
+  till_chr <- as.character(till)
+
+  # Separera startår
+  data_fran <- data |>
+    dplyr::filter(
+      period == fran_chr
+    ) |>
+    dplyr::select(
+      municipality,
+      municipality_name,
+      kpi,
+      kpi_name,
+      gender,
+      varde_fran = value
+    )
+
+  # Separera slutår
+  data_till <- data |>
+    dplyr::filter(
+      period == till_chr
+    ) |>
+    dplyr::select(
+      municipality,
+      municipality_name,
+      kpi,
+      kpi_name,
+      gender,
+      varde_till = value
+    )
+
+  # Slå ihop
+  resultat <- dplyr::full_join(
+    data_fran,
+    data_till,
+    by = c(
+      "municipality",
+      "municipality_name",
+      "kpi",
+      "kpi_name",
+      "gender"
+    )
+  )
+
+  # Lägg till år och förändring
+  resultat <- resultat |>
+    dplyr::mutate(
+      fran = fran,
+      till = till,
+
+      forandring = varde_till - varde_fran,
+
+      forandring_procent = dplyr::if_else(
+        is.na(varde_fran) |
+          varde_fran == 0 |
+          is.na(varde_till),
+        NA_real_,
+        ((varde_till - varde_fran) / abs(varde_fran)) * 100
+      )
+    ) |>
+    dplyr::select(
+      municipality,
+      municipality_name,
+      kpi,
+      kpi_name,
+      gender,
+      fran,
+      till,
+      varde_fran,
+      varde_till,
+      forandring,
+      forandring_procent
+    ) |>
+    dplyr::arrange(
+      kpi,
+      municipality,
+      gender
+    )
+
+  # Meddela om någon observation saknar ett av åren
+  saknade <- resultat |>
+    dplyr::filter(
+      is.na(varde_fran) |
+        is.na(varde_till)
+    )
+
+  if (nrow(saknade) > 0) {
+    message(
+      nrow(saknade),
+      " observation(er) saknar värde för ett av jämförelseåren."
+    )
+  }
+
+  rownames(resultat) <- NULL
+
+  as.data.frame(resultat)
+}
+
+#' Hämta jämförelse för kommun
+#'
+#' Hämtar data för en vald kommun och jämför med
+#' länets kommungrupp (ovägt medel).
+#'
+#' @param nyckeltal Ett eller flera nyckeltals-ID från Kolada.
+#' @param kommun En kommun angiven med kommunkod eller kommunnamn.
+#' @param ar Ett eller flera år.
+#' @param kon Valfritt kön: `"T"`, `"K"` eller `"M"`.
+#'
+#' @return En data.frame med värden för kommunen och länets kommungrupp.
+#'
+#' @examples
+#' \dontrun{
+#' hamta_jamforelse(
+#'   nyckeltal = "N01926",
+#'   kommun = "Haninge",
+#'   ar = 2025,
+#'   kon = "T"
+#' )
+#' }
+#'
+#' @export
+hamta_jamforelse <- function(
+    nyckeltal,
+    kommun,
+    ar,
+    kon = NULL
+) {
+
+  if (missing(kommun)) {
+    stop("Du måste ange en kommun.")
+  }
+
+  if (length(kommun) != 1) {
+    stop("hamta_jamforelse() hanterar en kommun åt gången.")
+  }
+
+  # ---------------------------------------------------------
+  # Hitta kommunen
+  # ---------------------------------------------------------
+
+  kommuner <- hamta_kommuner(
+    typ = "K"
+  )
+
+  kommun_chr <- as.character(
+    kommun
+  )
+
+  traff <- kommuner[
+    kommuner$municipality == kommun_chr |
+      tolower(kommuner$municipality_name) == tolower(kommun_chr),
+    ,
+    drop = FALSE
+  ]
+
+  if (nrow(traff) == 0) {
+    stop(
+      "Hittar ingen kommun med namn eller kod: ",
+      kommun
+    )
+  }
+
+  if (nrow(traff) > 1) {
+    stop(
+      "Flera kommuner matchade: ",
+      kommun,
+      ". Ange kommunkod."
+    )
+  }
+
+  kommun_id <- traff$municipality[1]
+  kommun_namn <- traff$municipality_name[1]
+
+  # ---------------------------------------------------------
+  # Hämta municipality groups
+  # ---------------------------------------------------------
+
+  grupper_svar <- jsonlite::fromJSON(
+    "https://api.kolada.se/v3/municipality_groups/?page=1&per_page=5000"
+  )
+
+  grupper <- grupper_svar$values %>%
+    tidyr::unnest(members)
+
+  # ---------------------------------------------------------
+  # Hitta grupper där kommunen är medlem
+  # ---------------------------------------------------------
+
+  kommun_grupper <- grupper[
+    as.character(grupper$member_id) == kommun_id,
+    ,
+    drop = FALSE
+  ]
+
+  # ---------------------------------------------------------
+  # Hitta länsgruppen
+  #
+  # Exempel:
+  # "Stockholms läns kommuner (ovägt medel)"
+  # ---------------------------------------------------------
+
+  lansgrupp <- kommun_grupper[
+    grepl(
+      "läns kommuner.*ovägt medel",
+      kommun_grupper$title,
+      ignore.case = TRUE
+    ),
+    ,
+    drop = FALSE
+  ]
+
+  if (nrow(lansgrupp) == 0) {
+    stop(
+      "Kunde inte hitta någon länsgrupp för ",
+      kommun_namn,
+      "."
+    )
+  }
+
+  if (nrow(lansgrupp) > 1) {
+    lansgrupp <- lansgrupp[1, , drop = FALSE]
+  }
+
+  grupp_id <- as.character(
+    lansgrupp$id[1]
+  )
+
+  grupp_namn <- as.character(
+    lansgrupp$title[1]
+  )
+
+  # ---------------------------------------------------------
+  # Hämta kommunens data
+  # ---------------------------------------------------------
+
+  data_kommun <- hamta_fran_kolada(
+    nyckeltal = nyckeltal,
+    kommun = kommun_id,
+    ar = ar,
+    kon = kon
+  )
+
+  if (nrow(data_kommun) > 0) {
+
+    data_kommun <- data_kommun |>
+      dplyr::mutate(
+        jamforelsetyp = "Kommun"
+      )
+  }
+
+  # ---------------------------------------------------------
+  # Hämta länsgruppens data
+  #
+  # Municipality group-ID används som municipality-ID
+  # i Koladas data-endpoint.
+  # ---------------------------------------------------------
+
+  data_grupp <- lapply(
+    nyckeltal,
+    function(kpi_id) {
+
+      url <- paste0(
+        "https://api.kolada.se/v3/data/kpi/",
+        kpi_id,
+        "/municipality/",
+        grupp_id,
+        "/year/",
+        paste(ar, collapse = ","),
+        "?page=1&per_page=5000"
+      )
+
+      svar <- jsonlite::fromJSON(
+        url
+      )
+
+      if (
+        is.null(svar$values) ||
+        length(svar$values) == 0
+      ) {
+        return(NULL)
+      }
+
+      data.frame(svar$values) |>
+        tidyr::unnest(values)
+    }
+  )
+
+  data_grupp <- dplyr::bind_rows(
+    data_grupp
+  )
+
+  if (nrow(data_grupp) > 0) {
+
+    if (!is.null(kon)) {
+      data_grupp <- data_grupp |>
+        dplyr::filter(
+          gender %in% toupper(kon)
+        )
+    }
+
+    # Hämta KPI-namn
+    kpi_namn <- lapply(
+      unique(data_grupp$kpi),
+      function(kpi_id) {
+
+        svar <- jsonlite::fromJSON(
+          paste0(
+            "https://api.kolada.se/v3/kpi/",
+            kpi_id
+          )
+        )
+
+        data.frame(
+          kpi = kpi_id,
+          kpi_name = svar$values$title[1],
+          stringsAsFactors = FALSE
+        )
+      }
+    )
+
+    kpi_namn <- dplyr::bind_rows(
+      kpi_namn
+    )
+
+    data_grupp <- data_grupp |>
+      dplyr::left_join(
+        kpi_namn,
+        by = "kpi"
+      ) |>
+      dplyr::mutate(
+        municipality_name = grupp_namn,
+        jamforelsetyp = "Länets kommuner"
+      ) |>
+      dplyr::select(
+        municipality,
+        municipality_name,
+        kpi,
+        kpi_name,
+        period,
+        value,
+        gender,
+        status,
+        jamforelsetyp
+      )
+  }
+
+  # ---------------------------------------------------------
+  # Slå ihop
+  # ---------------------------------------------------------
+
+  resultat <- dplyr::bind_rows(
+    data_kommun,
+    data_grupp
+  ) |>
+    dplyr::select(
+      jamforelsetyp,
+      municipality,
+      municipality_name,
+      kpi,
+      kpi_name,
+      period,
+      value,
+      gender,
+      status
+    ) |>
+    dplyr::arrange(
+      kpi,
+      period,
+      gender,
+      jamforelsetyp
+    )
+
+  rownames(resultat) <- NULL
+
+  as.data.frame(resultat)
+}
