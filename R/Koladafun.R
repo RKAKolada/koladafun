@@ -1429,3 +1429,28 @@ hamta_jamforelse <- function(
 
   as.data.frame(resultat)
 }
+
+#' koladafun: Funktioner för Kolada
+#'
+#' `koladafun` är ett R-paket med funktioner för att söka,
+#' utforska och hämta data från Kolada.
+#'
+#' @section Funktioner:
+#'
+#' * [hamta_fran_kolada()] - Hämta data från Kolada.
+#' * [sok_nyckeltal()] - Sök efter nyckeltal.
+#' * [info_nyckeltal()] - Visa information om nyckeltal.
+#' * [hamta_kommuner()] - Hämta kommuner och regioner.
+#' * [tillgangliga_ar()] - Visa tillgängliga år.
+#' * [senaste_varde()] - Hämta senaste tillgängliga värde.
+#' * [forandring()] - Beräkna förändring mellan två år.
+#' * [hamta_jamforelse()] - Jämför en kommun med länets kommuner.
+#'
+#' @section Mer information:
+#'
+#' Paketets README och källkod finns på GitHub:
+#' \url{https://github.com/RKAkolada/koladafun}
+#'
+#' @docType package
+#' @name koladafun
+NULL
