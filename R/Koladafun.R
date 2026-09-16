@@ -464,3 +464,498 @@ hamta_fran_kolada <- function(
     as.data.frame(data)
   )
 }
+
+# Intern hjälpfunktion för att hämta alla sidor från Koladas API
+.hamta_alla_sidor <- function(url, per_page = 5000) {
+
+  resultat <- list()
+  sida <- 1
+
+  repeat {
+
+    separator <- if (grepl("\\?", url)) "&" else "?"
+
+    aktuell_url <- paste0(
+      url,
+      separator,
+      "page=",
+      sida,
+      "&per_page=",
+      per_page
+    )
+
+    svar <- jsonlite::fromJSON(aktuell_url)
+
+    if (
+      is.null(svar$values) ||
+      length(svar$values) == 0
+    ) {
+      break
+    }
+
+    resultat[[sida]] <- as.data.frame(
+      svar$values
+    )
+
+    if (
+      nrow(as.data.frame(svar$values)) < per_page
+    ) {
+      break
+    }
+
+    sida <- sida + 1
+  }
+
+  dplyr::bind_rows(resultat)
+}
+
+#' Sök efter nyckeltal i Kolada
+#'
+#' Söker bland Koladas nyckeltal efter ett eller flera sökord.
+#' Sökningen görs i nyckeltals-ID, namn och beskrivning.
+#'
+#' Om flera sökord anges måste samtliga sökord förekomma
+#' i nyckeltalets metadata.
+#'
+#' @param sok Ett eller flera sökord, exempelvis `"förskola"`
+#'   eller `"kostnad förskola"`.
+#' @param max_resultat Maximalt antal träffar som returneras.
+#'   Standard är 50.
+#'
+#' @return En data.frame med matchande nyckeltal.
+#'
+#' @examples
+#' \dontrun{
+#' sok_nyckeltal("förskola")
+#' sok_nyckeltal("kostnad förskola")
+#' sok_nyckeltal("N01926")
+#' }
+#'
+#' @export
+sok_nyckeltal <- function(
+    sok,
+    max_resultat = 50
+) {
+
+  if (
+    missing(sok) ||
+    length(sok) == 0 ||
+    !nzchar(trimws(sok))
+  ) {
+    stop("Du måste ange ett sökord.")
+  }
+
+  nyckeltal <- .hamta_alla_sidor(
+    "https://api.kolada.se/v3/kpi"
+  )
+
+  sokkolumner <- intersect(
+    c(
+      "id",
+      "title",
+      "description"
+    ),
+    names(nyckeltal)
+  )
+
+  soktext <- apply(
+    nyckeltal[, sokkolumner, drop = FALSE],
+    1,
+    function(x) {
+      paste(
+        ifelse(is.na(x), "", x),
+        collapse = " "
+      )
+    }
+  )
+
+  soktext <- tolower(soktext)
+
+  sokord <- strsplit(
+    tolower(trimws(sok)),
+    "\\s+"
+  )[[1]]
+
+  traff <- Reduce(
+    `&`,
+    lapply(
+      sokord,
+      function(ord) {
+        grepl(
+          ord,
+          soktext,
+          fixed = TRUE
+        )
+      }
+    )
+  )
+
+  resultat <- nyckeltal[
+    traff,
+    ,
+    drop = FALSE
+  ]
+
+  # Lägg de viktigaste kolumnerna först
+  forst <- intersect(
+    c(
+      "id",
+      "title",
+      "description"
+    ),
+    names(resultat)
+  )
+
+  resultat <- resultat[
+    c(
+      forst,
+      setdiff(names(resultat), forst)
+    )
+  ]
+
+  resultat <- head(
+    resultat,
+    max_resultat
+  )
+
+  rownames(resultat) <- NULL
+
+  resultat
+}
+
+#' Visa information om nyckeltal
+#'
+#' Hämtar metadata för ett eller flera nyckeltal från Kolada.
+#'
+#' @param nyckeltal Ett eller flera nyckeltals-ID,
+#'   exempelvis `"N01926"` eller
+#'   `c("N01926", "N17454")`.
+#'
+#' @return En data.frame med metadata om nyckeltalen.
+#'
+#' @examples
+#' \dontrun{
+#' info_nyckeltal("N01926")
+#'
+#' info_nyckeltal(
+#'   c("N01926", "N17454")
+#' )
+#' }
+#'
+#' @export
+info_nyckeltal <- function(nyckeltal) {
+
+  if (
+    missing(nyckeltal) ||
+    length(nyckeltal) == 0
+  ) {
+    stop("Du måste ange minst ett nyckeltal.")
+  }
+
+  nyckeltal <- as.character(
+    nyckeltal
+  )
+
+  resultat <- lapply(
+    nyckeltal,
+    function(kpi_id) {
+
+      url <- paste0(
+        "https://api.kolada.se/v3/kpi/",
+        kpi_id
+      )
+
+      svar <- jsonlite::fromJSON(url)
+
+      if (
+        is.null(svar$values) ||
+        nrow(as.data.frame(svar$values)) == 0
+      ) {
+        stop(
+          "Nyckeltalet ",
+          kpi_id,
+          " kunde inte hittas."
+        )
+      }
+
+      as.data.frame(
+        svar$values
+      )
+    }
+  )
+
+  resultat <- dplyr::bind_rows(
+    resultat
+  )
+
+  # Lägg viktig information först
+  forst <- intersect(
+    c(
+      "id",
+      "title",
+      "description"
+    ),
+    names(resultat)
+  )
+
+  resultat <- resultat[
+    c(
+      forst,
+      setdiff(names(resultat), forst)
+    )
+  ]
+
+  rownames(resultat) <- NULL
+
+  resultat
+}
+
+#' Hämta kommuner och regioner från Kolada
+#'
+#' Hämtar en lista över kommuner och regioner från Kolada.
+#' Resultatet kan filtreras på områdestyp eller namn/kod.
+#'
+#' @param typ Valfri områdestyp.
+#'   `"K"` = kommun och `"R"` = region.
+#' @param sok Valfri söktext för namn eller kod.
+#'
+#' @return En data.frame med områdeskod, namn och typ.
+#'
+#' @examples
+#' \dontrun{
+#' hamta_kommuner()
+#' hamta_kommuner(typ = "K")
+#' hamta_kommuner(typ = "R")
+#' hamta_kommuner(sok = "Han")
+#' }
+#'
+#' @export
+hamta_kommuner <- function(
+    typ = NULL,
+    sok = NULL
+) {
+
+  kommuner <- .hamta_alla_sidor(
+    "https://api.kolada.se/v3/municipality"
+  )
+
+  kommuner$id <- as.character(
+    kommuner$id
+  )
+
+  kommuner$title <- as.character(
+    kommuner$title
+  )
+
+  kommuner$type <- as.character(
+    kommuner$type
+  )
+
+  # Gör regiontypen enklare för användaren
+  kommuner$type[
+    kommuner$type == "L"
+  ] <- "R"
+
+  if (!is.null(typ)) {
+
+    typ <- toupper(
+      as.character(typ)
+    )
+
+    ogiltiga <- setdiff(
+      typ,
+      c("K", "R")
+    )
+
+    if (length(ogiltiga) > 0) {
+      stop(
+        "Ogiltig typ: ",
+        paste(
+          ogiltiga,
+          collapse = ", "
+        ),
+        ". Använd K eller R."
+      )
+    }
+
+    kommuner <- kommuner[
+      kommuner$type %in% typ,
+      ,
+      drop = FALSE
+    ]
+  }
+
+  if (!is.null(sok)) {
+
+    sok <- tolower(
+      as.character(sok)
+    )
+
+    traff <- grepl(
+      sok,
+      tolower(kommuner$title),
+      fixed = TRUE
+    ) |
+      grepl(
+        sok,
+        tolower(kommuner$id),
+        fixed = TRUE
+      )
+
+    kommuner <- kommuner[
+      traff,
+      ,
+      drop = FALSE
+    ]
+  }
+
+  kommuner <- kommuner |>
+    dplyr::select(
+      municipality = id,
+      municipality_name = title,
+      type
+    ) |>
+    dplyr::arrange(
+      type,
+      municipality_name
+    )
+
+  rownames(kommuner) <- NULL
+
+  as.data.frame(kommuner)
+}
+
+#' Visa tillgängliga år för nyckeltal
+#'
+#' Hämtar vilka år som har data för ett eller flera
+#' nyckeltal i Kolada.
+#'
+#' @param nyckeltal Ett eller flera nyckeltals-ID.
+#' @param kommun Valfri kommun eller region, angiven som
+#'   namn eller kod.
+#' @param kommuntyp Valfri områdestyp.
+#'   `"K"` = kommun och `"R"` = region.
+#'
+#' @return En data.frame med nyckeltals-ID och tillgängliga år.
+#'
+#' @examples
+#' \dontrun{
+#' tillgangliga_ar("N01926")
+#'
+#' tillgangliga_ar(
+#'   "N01926",
+#'   kommun = "Haninge"
+#' )
+#' }
+#'
+#' @export
+tillgangliga_ar <- function(
+    nyckeltal,
+    kommun = NULL,
+    kommuntyp = NULL
+) {
+
+  data <- hamta_fran_kolada(
+    nyckeltal = nyckeltal,
+    kommun = kommun,
+    kommuntyp = kommuntyp
+  )
+
+  if (nrow(data) == 0) {
+    return(
+      data.frame()
+    )
+  }
+
+  resultat <- data |>
+    dplyr::distinct(
+      kpi,
+      period
+    ) |>
+    dplyr::arrange(
+      kpi,
+      period
+    )
+
+  rownames(resultat) <- NULL
+
+  as.data.frame(resultat)
+}
+
+#' Hämta senaste tillgängliga värde
+#'
+#' Hämtar det senast tillgängliga värdet för ett eller flera
+#' nyckeltal och områden.
+#'
+#' Det senaste året bestäms separat för varje kombination av
+#' nyckeltal, område och kön.
+#'
+#' @param nyckeltal Ett eller flera nyckeltals-ID.
+#' @param kommun Valfri kommun eller region.
+#' @param kon Valfritt kön: `"T"`, `"K"` eller `"M"`.
+#' @param kommuntyp Valfri områdestyp:
+#'   `"K"` = kommun och `"R"` = region.
+#'
+#' @return En data.frame med senaste tillgängliga observation.
+#'
+#' @examples
+#' \dontrun{
+#' senaste_varde(
+#'   nyckeltal = "N01926",
+#'   kommun = "Haninge"
+#' )
+#' }
+#'
+#' @export
+senaste_varde <- function(
+    nyckeltal,
+    kommun = NULL,
+    kon = NULL,
+    kommuntyp = NULL
+) {
+
+  data <- hamta_fran_kolada(
+    nyckeltal = nyckeltal,
+    kommun = kommun,
+    kon = kon,
+    kommuntyp = kommuntyp
+  )
+
+  if (nrow(data) == 0) {
+    return(
+      data.frame()
+    )
+  }
+
+  data <- data |>
+    dplyr::mutate(
+      period_num = suppressWarnings(
+        as.numeric(period)
+      )
+    ) |>
+    dplyr::group_by(
+      kpi,
+      municipality,
+      gender
+    ) |>
+    dplyr::filter(
+      period_num == max(
+        period_num,
+        na.rm = TRUE
+      )
+    ) |>
+    dplyr::ungroup() |>
+    dplyr::select(
+      -period_num
+    ) |>
+    dplyr::arrange(
+      kpi,
+      municipality,
+      gender
+    )
+
+  rownames(data) <- NULL
+
+  as.data.frame(data)
+}
+
