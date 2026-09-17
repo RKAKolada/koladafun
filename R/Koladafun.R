@@ -1190,25 +1190,40 @@ forandring <- function(
   as.data.frame(resultat)
 }
 
-#' Hämta jämförelse för kommun
+#' Hämta jämförelse inom län
 #'
-#' Hämtar data för en vald kommun och jämför med
-#' länets kommungrupp (ovägt medel).
+#' Hämtar värdet för en vald kommun, övriga kommuner i samma län
+#' samt, valfritt, länets kommungrupp (ovägt medel).
 #'
 #' @param nyckeltal Ett eller flera nyckeltals-ID från Kolada.
-#' @param kommun En kommun angiven med kommunkod eller kommunnamn.
-#' @param ar Ett eller flera år.
-#' @param kon Valfritt kön: `"T"`, `"K"` eller `"M"`.
 #'
-#' @return En data.frame med värden för kommunen och länets kommungrupp.
+#' @param kommun En kommun angiven med kommunkod eller kommunnamn,
+#'   exempelvis `"2085"` eller `"Ludvika"`.
+#'
+#' @param ar Ett eller flera år.
+#'
+#' @param kon Valfritt filter för kön.
+#'   `"T"` = total, `"K"` = kvinnor och `"M"` = män.
+#'
+#' @param inkludera_grupp Logiskt värde. Om `TRUE` inkluderas även
+#'   länets kommungrupp (ovägt medel). Standard är `TRUE`.
+#'
+#' @return En data.frame med den valda kommunen, övriga kommuner
+#'   i samma län och, om valt, länets ovägda medelvärde.
 #'
 #' @examples
 #' \dontrun{
 #' hamta_jamforelse(
 #'   nyckeltal = "N01926",
-#'   kommun = "Haninge",
+#'   kommun = "Ludvika",
+#'   ar = 2025
+#' )
+#'
+#' hamta_jamforelse(
+#'   nyckeltal = "N01926",
+#'   kommun = "Ludvika",
 #'   ar = 2025,
-#'   kon = "T"
+#'   inkludera_grupp = FALSE
 #' )
 #' }
 #'
@@ -1217,7 +1232,8 @@ hamta_jamforelse <- function(
     nyckeltal,
     kommun,
     ar,
-    kon = NULL
+    kon = NULL,
+    inkludera_grupp = TRUE
 ) {
 
   if (missing(kommun)) {
@@ -1228,10 +1244,15 @@ hamta_jamforelse <- function(
     stop("hamta_jamforelse() hanterar en kommun åt gången.")
   }
 
-  # ---------------------------------------------------------
-  # Hitta kommunen
-  # ---------------------------------------------------------
+  if (
+    length(inkludera_grupp) != 1 ||
+    !is.logical(inkludera_grupp) ||
+    is.na(inkludera_grupp)
+  ) {
+    stop("'inkludera_grupp' måste vara TRUE eller FALSE.")
+  }
 
+  # Hitta vald kommun
   kommuner <- hamta_kommuner(
     typ = "K"
   )
@@ -1265,33 +1286,20 @@ hamta_jamforelse <- function(
   kommun_id <- traff$municipality[1]
   kommun_namn <- traff$municipality_name[1]
 
-  # ---------------------------------------------------------
-  # Hämta municipality groups
-  # ---------------------------------------------------------
-
+  # Hämta kommungrupper
   grupper_svar <- jsonlite::fromJSON(
     "https://api.kolada.se/v3/municipality_groups/?page=1&per_page=5000"
   )
 
-  grupper <- grupper_svar$values %>%
+  grupper <- grupper_svar$values |>
     tidyr::unnest(members)
 
-  # ---------------------------------------------------------
-  # Hitta grupper där kommunen är medlem
-  # ---------------------------------------------------------
-
+  # Hitta länsgruppen för vald kommun
   kommun_grupper <- grupper[
     as.character(grupper$member_id) == kommun_id,
     ,
     drop = FALSE
   ]
-
-  # ---------------------------------------------------------
-  # Hitta länsgruppen
-  #
-  # Exempel:
-  # "Stockholms läns kommuner (ovägt medel)"
-  # ---------------------------------------------------------
 
   lansgrupp <- kommun_grupper[
     grepl(
@@ -1311,9 +1319,7 @@ hamta_jamforelse <- function(
     )
   }
 
-  if (nrow(lansgrupp) > 1) {
-    lansgrupp <- lansgrupp[1, , drop = FALSE]
-  }
+  lansgrupp <- lansgrupp[1, , drop = FALSE]
 
   grupp_id <- as.character(
     lansgrupp$id[1]
@@ -1323,127 +1329,139 @@ hamta_jamforelse <- function(
     lansgrupp$title[1]
   )
 
-  # ---------------------------------------------------------
-  # Hämta kommunens data
-  # ---------------------------------------------------------
+  # Hitta alla kommuner i samma länsgrupp
+  kommuner_i_lanet <- grupper[
+    grupper$id == grupp_id,
+    ,
+    drop = FALSE
+  ]
 
-  data_kommun <- hamta_fran_kolada(
+  kommun_idn <- unique(
+    as.character(
+      kommuner_i_lanet$member_id
+    )
+  )
+
+  # Hämta samtliga kommunvärden i länet
+  data_kommuner <- hamta_fran_kolada(
     nyckeltal = nyckeltal,
-    kommun = kommun_id,
+    kommun = kommun_idn,
     ar = ar,
     kon = kon
   )
 
-  if (nrow(data_kommun) > 0) {
+  if (nrow(data_kommuner) > 0) {
 
-    data_kommun <- data_kommun |>
+    data_kommuner <- data_kommuner |>
       dplyr::mutate(
-        jamforelsetyp = "Kommun"
+        jamforelsetyp = dplyr::if_else(
+          municipality == kommun_id,
+          "Vald kommun",
+          "Övrig kommun i länet"
+        )
       )
   }
 
-  # ---------------------------------------------------------
-  # Hämta länsgruppens data
-  #
-  # Municipality group-ID används som municipality-ID
-  # i Koladas data-endpoint.
-  # ---------------------------------------------------------
+  # Hämta länets ovägda medel endast om användaren vill ha det
+  if (inkludera_grupp) {
 
-  data_grupp <- lapply(
-    nyckeltal,
-    function(kpi_id) {
-
-      url <- paste0(
-        "https://api.kolada.se/v3/data/kpi/",
-        kpi_id,
-        "/municipality/",
-        grupp_id,
-        "/year/",
-        paste(ar, collapse = ","),
-        "?page=1&per_page=5000"
-      )
-
-      svar <- jsonlite::fromJSON(
-        url
-      )
-
-      if (
-        is.null(svar$values) ||
-        length(svar$values) == 0
-      ) {
-        return(NULL)
-      }
-
-      data.frame(svar$values) |>
-        tidyr::unnest(values)
-    }
-  )
-
-  data_grupp <- dplyr::bind_rows(
-    data_grupp
-  )
-
-  if (nrow(data_grupp) > 0) {
-
-    if (!is.null(kon)) {
-      data_grupp <- data_grupp |>
-        dplyr::filter(
-          gender %in% toupper(kon)
-        )
-    }
-
-    # Hämta KPI-namn
-    kpi_namn <- lapply(
-      unique(data_grupp$kpi),
+    data_grupp <- lapply(
+      nyckeltal,
       function(kpi_id) {
 
-        svar <- jsonlite::fromJSON(
-          paste0(
-            "https://api.kolada.se/v3/kpi/",
-            kpi_id
-          )
+        url <- paste0(
+          "https://api.kolada.se/v3/data/kpi/",
+          kpi_id,
+          "/municipality/",
+          grupp_id,
+          "/year/",
+          paste(ar, collapse = ","),
+          "?page=1&per_page=5000"
         )
 
-        data.frame(
-          kpi = kpi_id,
-          kpi_name = svar$values$title[1],
-          stringsAsFactors = FALSE
+        svar <- jsonlite::fromJSON(
+          url
         )
+
+        if (
+          is.null(svar$values) ||
+          length(svar$values) == 0
+        ) {
+          return(NULL)
+        }
+
+        data.frame(svar$values) |>
+          tidyr::unnest(values)
       }
     )
 
-    kpi_namn <- dplyr::bind_rows(
-      kpi_namn
+    data_grupp <- dplyr::bind_rows(
+      data_grupp
     )
 
-    data_grupp <- data_grupp |>
-      dplyr::left_join(
-        kpi_namn,
-        by = "kpi"
-      ) |>
-      dplyr::mutate(
-        municipality_name = grupp_namn,
-        jamforelsetyp = "Länets kommuner"
-      ) |>
-      dplyr::select(
-        municipality,
-        municipality_name,
-        kpi,
-        kpi_name,
-        period,
-        value,
-        gender,
-        status,
-        jamforelsetyp
+    if (nrow(data_grupp) > 0) {
+
+      if (!is.null(kon)) {
+        data_grupp <- data_grupp |>
+          dplyr::filter(
+            gender %in% toupper(kon)
+          )
+      }
+
+      # Hämta KPI-namn
+      kpi_namn <- lapply(
+        unique(data_grupp$kpi),
+        function(kpi_id) {
+
+          svar <- jsonlite::fromJSON(
+            paste0(
+              "https://api.kolada.se/v3/kpi/",
+              kpi_id
+            )
+          )
+
+          data.frame(
+            kpi = kpi_id,
+            kpi_name = svar$values$title[1],
+            stringsAsFactors = FALSE
+          )
+        }
       )
+
+      kpi_namn <- dplyr::bind_rows(
+        kpi_namn
+      )
+
+      data_grupp <- data_grupp |>
+        dplyr::left_join(
+          kpi_namn,
+          by = "kpi"
+        ) |>
+        dplyr::mutate(
+          municipality_name = grupp_namn,
+          jamforelsetyp = "Länets kommuner"
+        ) |>
+        dplyr::select(
+          municipality,
+          municipality_name,
+          kpi,
+          kpi_name,
+          period,
+          value,
+          gender,
+          status,
+          jamforelsetyp
+        )
+    }
+
+  } else {
+
+    data_grupp <- data.frame()
   }
 
-  # ---------------------------------------------------------
   # Slå ihop
-  # ---------------------------------------------------------
-
   resultat <- dplyr::bind_rows(
-    data_kommun,
+    data_kommuner,
     data_grupp
   ) |>
     dplyr::select(
@@ -1457,11 +1475,22 @@ hamta_jamforelse <- function(
       gender,
       status
     ) |>
+    dplyr::mutate(
+      jamforelsetyp = factor(
+        jamforelsetyp,
+        levels = c(
+          "Vald kommun",
+          "Övrig kommun i länet",
+          "Länets kommuner"
+        )
+      )
+    ) |>
     dplyr::arrange(
       kpi,
       period,
       gender,
-      jamforelsetyp
+      jamforelsetyp,
+      municipality_name
     )
 
   rownames(resultat) <- NULL

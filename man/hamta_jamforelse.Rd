@@ -2,33 +2,45 @@
 % Please edit documentation in R/Koladafun.R
 \name{hamta_jamforelse}
 \alias{hamta_jamforelse}
-\title{Hämta jämförelse för kommun}
+\title{Hämta jämförelse inom län}
 \usage{
-hamta_jamforelse(nyckeltal, kommun, ar, kon = NULL)
+hamta_jamforelse(nyckeltal, kommun, ar, kon = NULL, inkludera_grupp = TRUE)
 }
 \arguments{
 \item{nyckeltal}{Ett eller flera nyckeltals-ID från Kolada.}
 
-\item{kommun}{En kommun angiven med kommunkod eller kommunnamn.}
+\item{kommun}{En kommun angiven med kommunkod eller kommunnamn,
+exempelvis \code{"2085"} eller \code{"Ludvika"}.}
 
 \item{ar}{Ett eller flera år.}
 
-\item{kon}{Valfritt kön: \code{"T"}, \code{"K"} eller \code{"M"}.}
+\item{kon}{Valfritt filter för kön.
+\code{"T"} = total, \code{"K"} = kvinnor och \code{"M"} = män.}
+
+\item{inkludera_grupp}{Logiskt värde. Om \code{TRUE} inkluderas även
+länets kommungrupp (ovägt medel). Standard är \code{TRUE}.}
 }
 \value{
-En data.frame med värden för kommunen och länets kommungrupp.
+En data.frame med den valda kommunen, övriga kommuner
+i samma län och, om valt, länets ovägda medelvärde.
 }
 \description{
-Hämtar data för en vald kommun och jämför med
-länets kommungrupp (ovägt medel).
+Hämtar värdet för en vald kommun, övriga kommuner i samma län
+samt, valfritt, länets kommungrupp (ovägt medel).
 }
 \examples{
 \dontrun{
 hamta_jamforelse(
   nyckeltal = "N01926",
-  kommun = "Haninge",
+  kommun = "Ludvika",
+  ar = 2025
+)
+
+hamta_jamforelse(
+  nyckeltal = "N01926",
+  kommun = "Ludvika",
   ar = 2025,
-  kon = "T"
+  inkludera_grupp = FALSE
 )
 }
 

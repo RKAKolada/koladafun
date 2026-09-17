@@ -193,7 +193,7 @@ Mer information om funktionen finns även i R:
 
 ## Fler funktioner
 
-Utöver `hamta_fran_kolada()` finns flera hjälpfunktioner för att hitta nyckeltal, läsa metadata, lista kommuner och regioner samt identifiera tillgängliga år och senaste värden.
+Utöver `hamta_fran_kolada()` finns flera hjälpfunktioner för att hitta nyckeltal, läsa metadata, lista kommuner och regioner, identifiera tillgängliga år, hämta senaste värden, beräkna förändringar och göra jämförelser mellan kommuner inom samma län.
 
 ### Sök efter nyckeltal
 
@@ -473,62 +473,106 @@ Mer information:
 ?forandring
 ```
 
-### Jämför en kommun med länets kommuner
+### Jämför en kommun med övriga kommuner i länet
 
-Med `hamta_jamforelse()` kan ett värde för en kommun jämföras med det ovägda medelvärdet för kommunerna i samma län.
+Med `hamta_jamforelse()` kan en vald kommun jämföras med övriga kommuner i samma län.
 
-Kommunen kan anges med namn:
+Som standard hämtas:
+
+- den valda kommunen
+- övriga kommuner i samma län
+- länets kommungrupp, uttryckt som ovägt medel
+
+Exempel:
 
 ```r
 hamta_jamforelse(
   nyckeltal = "N01926",
-  kommun = "Haninge",
+  kommun = "Ludvika",
   ar = 2025,
   kon = "T"
 )
 ```
 
-eller med kommunkod:
+Kommunen kan anges med namn eller kommunkod.
 
 ```r
 hamta_jamforelse(
   nyckeltal = "N01926",
-  kommun = "0136",
+  kommun = "2085",
   ar = 2025,
   kon = "T"
 )
 ```
 
-Funktionen identifierar automatiskt den länsgrupp som kommunen tillhör i Kolada och hämtar både kommunens värde och länsgruppens värde.
+Funktionen identifierar automatiskt vilken länsgrupp kommunen tillhör i Kolada och hämtar samtliga kommuner som ingår i samma grupp.
 
-Resultatet innehåller en kolumn `jamforelsetyp` som visar om observationen avser:
+Resultatet innehåller kolumnen `jamforelsetyp`, som visar vilken typ av observation raden avser:
 
-- `"Kommun"` = den valda kommunen
-- `"Länets kommuner"` = ovägt medel för kommunerna i länet
+- `"Vald kommun"` = den kommun som angavs i funktionen
+- `"Övrig kommun i länet"` = övriga kommuner i samma län
+- `"Länets kommuner"` = länets kommungrupp, ovägt medel
+
+Exempelvis ger:
+
+```r
+hamta_jamforelse(
+  nyckeltal = "N01926",
+  kommun = "Ludvika",
+  ar = 2025
+)
+```
+
+värden för Ludvika, övriga kommuner i Dalarnas län samt Dalarnas läns kommuner (ovägt medel).
+
+### Exkludera länets ovägda medel
+
+Om endast den valda kommunen och övriga kommuner i länet ska hämtas kan `inkludera_grupp = FALSE` användas:
+
+```r
+hamta_jamforelse(
+  nyckeltal = "N01926",
+  kommun = "Ludvika",
+  ar = 2025,
+  inkludera_grupp = FALSE
+)
+```
+
+Standard är:
+
+```r
+inkludera_grupp = TRUE
+```
+
+vilket innebär att länets ovägda medel inkluderas.
+
+### Flera år
 
 Flera år kan anges samtidigt:
 
 ```r
 hamta_jamforelse(
   nyckeltal = "N01926",
-  kommun = "Haninge",
+  kommun = "Ludvika",
   ar = 2020:2025,
   kon = "T"
 )
 ```
+
+### Flera nyckeltal
 
 Det går även att ange flera nyckeltal:
 
 ```r
 hamta_jamforelse(
   nyckeltal = c("N01926", "N17454"),
-  kommun = "Haninge",
+  kommun = "Ludvika",
   ar = 2025,
   kon = "T"
 )
 ```
 
-Observera att jämförelsevärdet avser Koladas kommungrupp för länets kommuner (ovägt medel), inte regionorganisationens eget värde.
+Observera att `"Länets kommuner"` avser Koladas kommungrupp för länets kommuner och dess ovägda medel. Det är inte samma sak som regionorganisationens eget värde.
 
 Mer information:
 
@@ -581,7 +625,7 @@ data <- senaste_varde(
 | `tillgangliga_ar()` | Visar vilka år som har tillgängliga data för ett nyckeltal. |
 | `senaste_varde()` | Hämtar den senaste tillgängliga observationen. |
 | `forandring()` | Beräknar absolut och procentuell förändring mellan två år. |
-| `hamta_jamforelse()` | Jämför en kommun med det ovägda medelvärdet för kommunerna i samma län. |
+| `hamta_jamforelse()` | Jämför en vald kommun med övriga kommuner i samma län och, valfritt, länets ovägda medel. |
 
 Dokumentation för samtliga funktioner finns även direkt i R:
 
