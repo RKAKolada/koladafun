@@ -2,9 +2,17 @@
 % Please edit documentation in R/Koladafun.R
 \name{hamta_jamforelse}
 \alias{hamta_jamforelse}
-\title{Hämta jämförelse inom län}
+\title{Hämta jämförelse för en kommun}
 \usage{
-hamta_jamforelse(nyckeltal, kommun, ar, kon = NULL, inkludera_grupp = TRUE)
+hamta_jamforelse(
+  nyckeltal,
+  kommun,
+  ar,
+  kon = NULL,
+  jamforelse = "lan",
+  verksamhet = NULL,
+  inkludera_grupp = TRUE
+)
 }
 \arguments{
 \item{nyckeltal}{Ett eller flera nyckeltals-ID från Kolada.}
@@ -12,24 +20,39 @@ hamta_jamforelse(nyckeltal, kommun, ar, kon = NULL, inkludera_grupp = TRUE)
 \item{kommun}{En kommun angiven med kommunkod eller kommunnamn,
 exempelvis \code{"2085"} eller \code{"Ludvika"}.}
 
-\item{ar}{Ett eller flera år.}
+\item{ar}{Ett eller flera år för de nyckeltal som ska hämtas.}
 
 \item{kon}{Valfritt filter för kön.
 \code{"T"} = total, \code{"K"} = kvinnor och \code{"M"} = män.}
 
+\item{jamforelse}{Typ av jämförelse.
+\code{"lan"} = kommuner i samma län,
+\code{"kommungrupp"} = kommunens SKR-kommungrupp,
+\code{"liknande"} = liknande kommuner.
+Standard är \code{"lan"}.}
+
+\item{verksamhet}{Valfritt. Används när \code{jamforelse = "liknande"}.
+Exempelvis \code{"förskola"}, \code{"grundskola"} eller \code{"äldreomsorg"}.
+Om NULL visas en meny med tillgängliga grupper i Console.}
+
 \item{inkludera_grupp}{Logiskt värde. Om \code{TRUE} inkluderas även
-länets kommungrupp (ovägt medel). Standard är \code{TRUE}.}
+jämförelsegruppens ovägda medel. Standard är \code{TRUE}.}
 }
 \value{
 En data.frame med den valda kommunen, övriga kommuner
-i samma län och, om valt, länets ovägda medelvärde.
+i jämförelsegruppen och, om valt, gruppens ovägda medel.
 }
 \description{
-Hämtar värdet för en vald kommun, övriga kommuner i samma län
-samt, valfritt, länets kommungrupp (ovägt medel).
+Hämtar värden för en vald kommun och andra kommuner i en vald
+jämförelsegrupp.
+}
+\details{
+Jämförelsen kan göras mot kommunerna i samma län, kommunens
+SKR-kommungrupp eller någon av Koladas grupper för liknande kommuner.
 }
 \examples{
 \dontrun{
+
 hamta_jamforelse(
   nyckeltal = "N01926",
   kommun = "Ludvika",
@@ -40,8 +63,24 @@ hamta_jamforelse(
   nyckeltal = "N01926",
   kommun = "Ludvika",
   ar = 2025,
-  inkludera_grupp = FALSE
+  jamforelse = "kommungrupp"
 )
+
+hamta_jamforelse(
+  nyckeltal = "N01926",
+  kommun = "Ludvika",
+  ar = 2025,
+  jamforelse = "liknande"
+)
+
+hamta_jamforelse(
+  nyckeltal = "N01926",
+  kommun = "Ludvika",
+  ar = 2025,
+  jamforelse = "liknande",
+  verksamhet = "förskola"
+)
+
 }
 
 }

@@ -473,17 +473,37 @@ Mer information:
 ?forandring
 ```
 
-### Jämför en kommun med övriga kommuner i länet
+### Jämför en kommun med andra kommuner
 
-Med `hamta_jamforelse()` kan en vald kommun jämföras med övriga kommuner i samma län.
+Med `hamta_jamforelse()` kan en vald kommun jämföras med andra kommuner utifrån olika jämförelsegrupper i Kolada.
 
-Som standard hämtas:
+Det går att välja mellan:
+
+- kommuner i samma län
+- SKR:s kommungruppsindelning
+- liknande kommuner inom olika verksamhetsområden
+
+Som standard används kommunerna i samma län.
+
+### Jämför med kommunerna i samma län
+
+```r
+hamta_jamforelse(
+  nyckeltal = "N01926",
+  kommun = "Ludvika",
+  ar = 2025,
+  kon = "T",
+  jamforelse = "lan"
+)
+```
+
+Funktionen identifierar automatiskt vilket län kommunen tillhör och hämtar:
 
 - den valda kommunen
 - övriga kommuner i samma län
-- länets kommungrupp, uttryckt som ovägt medel
+- länets kommungrupp (ovägt medel)
 
-Exempel:
+Eftersom `"lan"` är standard kan samma anrop även skrivas:
 
 ```r
 hamta_jamforelse(
@@ -494,85 +514,119 @@ hamta_jamforelse(
 )
 ```
 
-Kommunen kan anges med namn eller kommunkod.
+### Jämför med SKR:s kommungrupp
 
-```r
-hamta_jamforelse(
-  nyckeltal = "N01926",
-  kommun = "2085",
-  ar = 2025,
-  kon = "T"
-)
-```
-
-Funktionen identifierar automatiskt vilken länsgrupp kommunen tillhör i Kolada och hämtar samtliga kommuner som ingår i samma grupp.
-
-Resultatet innehåller kolumnen `jamforelsetyp`, som visar vilken typ av observation raden avser:
-
-- `"Vald kommun"` = den kommun som angavs i funktionen
-- `"Övrig kommun i länet"` = övriga kommuner i samma län
-- `"Länets kommuner"` = länets kommungrupp, ovägt medel
-
-Exempelvis ger:
-
-```r
-hamta_jamforelse(
-  nyckeltal = "N01926",
-  kommun = "Ludvika",
-  ar = 2025
-)
-```
-
-värden för Ludvika, övriga kommuner i Dalarnas län samt Dalarnas läns kommuner (ovägt medel).
-
-### Exkludera länets ovägda medel
-
-Om endast den valda kommunen och övriga kommuner i länet ska hämtas kan `inkludera_grupp = FALSE` användas:
+Med `jamforelse = "kommungrupp"` jämförs kommunen istället med kommunerna i samma kommungrupp enligt SKR:s kommungruppsindelning.
 
 ```r
 hamta_jamforelse(
   nyckeltal = "N01926",
   kommun = "Ludvika",
   ar = 2025,
-  inkludera_grupp = FALSE
+  kon = "T",
+  jamforelse = "kommungrupp"
 )
 ```
 
-Standard är:
+Funktionen identifierar automatiskt vilken kommungrupp den valda kommunen tillhör och hämtar den valda kommunen, övriga kommuner i kommungruppen samt gruppvärdet.
+
+### Jämför med liknande kommuner
+
+Med `jamforelse = "liknande"` kan kommunen jämföras med liknande kommuner inom olika verksamhetsområden.
+
+```r
+hamta_jamforelse(
+  nyckeltal = "N01926",
+  kommun = "Ludvika",
+  ar = 2025,
+  kon = "T",
+  jamforelse = "liknande"
+)
+```
+
+När funktionen körs visas de tillgängliga grupperna för den valda kommunen i Console, exempelvis:
+
+```text
+Välj grupp för liknande kommuner för Ludvika:
+
+1: arbetsmarknad (2024)
+2: ekonomiskt bistånd (2023)
+3: fritidshem (2024)
+4: förskola (2024)
+5: grundskola (2024)
+6: gymnasieskola (2024)
+7: IFO (2024)
+8: LSS (2024)
+9: räddningstjänst (2024)
+10: socioekonomi (2024)
+11: äldreomsorg (2024)
+12: övergripande (2025)
+
+Selection:
+```
+
+Ange numret för den jämförelsegrupp som ska användas. Om exempelvis `4` anges används gruppen för liknande kommuner inom förskola.
+
+De grupper som visas hämtas från Kolada och kan därför skilja sig mellan kommuner och förändras när gruppindelningarna uppdateras.
+
+Det går också att ange verksamheten direkt och därmed hoppa över valet i Console:
+
+```r
+hamta_jamforelse(
+  nyckeltal = "N01926",
+  kommun = "Ludvika",
+  ar = 2025,
+  kon = "T",
+  jamforelse = "liknande",
+  verksamhet = "förskola"
+)
+```
+
+Detta är särskilt användbart när funktionen används i ett script eller annat automatiserat arbetsflöde.
+
+### Inkludera eller exkludera gruppvärdet
+
+Som standard är:
 
 ```r
 inkludera_grupp = TRUE
 ```
 
-vilket innebär att länets ovägda medel inkluderas.
+vilket innebär att jämförelsegruppens gruppvärde inkluderas tillsammans med de enskilda kommunerna.
 
-### Flera år
-
-Flera år kan anges samtidigt:
+Om endast kommunernas egna värden ska hämtas används:
 
 ```r
 hamta_jamforelse(
   nyckeltal = "N01926",
   kommun = "Ludvika",
-  ar = 2020:2025,
-  kon = "T"
+  ar = 2025,
+  jamforelse = "lan",
+  inkludera_grupp = FALSE
 )
 ```
 
-### Flera nyckeltal
+### Resultatet
 
-Det går även att ange flera nyckeltal:
+Resultatet innehåller bland annat kolumnerna `jamforelsetyp` och `jamforelsegrupp`.
+
+`jamforelsetyp` visar om observationen avser den valda kommunen, en annan kommun i jämförelsegruppen eller gruppvärdet.
+
+`jamforelsegrupp` visar vilken grupp i Kolada som har använts för jämförelsen.
+
+Flera år och flera nyckeltal kan anges på samma sätt som i `hamta_fran_kolada()`:
 
 ```r
 hamta_jamforelse(
   nyckeltal = c("N01926", "N17454"),
   kommun = "Ludvika",
-  ar = 2025,
-  kon = "T"
+  ar = 2020:2025,
+  kon = "T",
+  jamforelse = "lan"
 )
 ```
 
-Observera att `"Länets kommuner"` avser Koladas kommungrupp för länets kommuner och dess ovägda medel. Det är inte samma sak som regionorganisationens eget värde.
+Observera att gruppvärden avser Koladas jämförelsegrupper och inte regionorganisationens eget värde.
 
 Mer information:
 
@@ -625,7 +679,7 @@ data <- senaste_varde(
 | `tillgangliga_ar()` | Visar vilka år som har tillgängliga data för ett nyckeltal. |
 | `senaste_varde()` | Hämtar den senaste tillgängliga observationen. |
 | `forandring()` | Beräknar absolut och procentuell förändring mellan två år. |
-| `hamta_jamforelse()` | Jämför en vald kommun med övriga kommuner i samma län och, valfritt, länets ovägda medel. |
+| `hamta_jamforelse()` | Jämför en kommun med kommuner i samma län, SKR-kommungrupp eller grupper av liknande kommuner. |
 
 Dokumentation för samtliga funktioner finns även direkt i R:
 

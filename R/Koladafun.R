@@ -1190,29 +1190,43 @@ forandring <- function(
   as.data.frame(resultat)
 }
 
-#' Hämta jämförelse inom län
+#' Hämta jämförelse för en kommun
 #'
-#' Hämtar värdet för en vald kommun, övriga kommuner i samma län
-#' samt, valfritt, länets kommungrupp (ovägt medel).
+#' Hämtar värden för en vald kommun och andra kommuner i en vald
+#' jämförelsegrupp.
+#'
+#' Jämförelsen kan göras mot kommunerna i samma län, kommunens
+#' SKR-kommungrupp eller någon av Koladas grupper för liknande kommuner.
 #'
 #' @param nyckeltal Ett eller flera nyckeltals-ID från Kolada.
 #'
 #' @param kommun En kommun angiven med kommunkod eller kommunnamn,
 #'   exempelvis `"2085"` eller `"Ludvika"`.
 #'
-#' @param ar Ett eller flera år.
+#' @param ar Ett eller flera år för de nyckeltal som ska hämtas.
 #'
 #' @param kon Valfritt filter för kön.
 #'   `"T"` = total, `"K"` = kvinnor och `"M"` = män.
 #'
+#' @param jamforelse Typ av jämförelse.
+#'   `"lan"` = kommuner i samma län,
+#'   `"kommungrupp"` = kommunens SKR-kommungrupp,
+#'   `"liknande"` = liknande kommuner.
+#'   Standard är `"lan"`.
+#'
+#' @param verksamhet Valfritt. Används när `jamforelse = "liknande"`.
+#'   Exempelvis `"förskola"`, `"grundskola"` eller `"äldreomsorg"`.
+#'   Om NULL visas en meny med tillgängliga grupper i Console.
+#'
 #' @param inkludera_grupp Logiskt värde. Om `TRUE` inkluderas även
-#'   länets kommungrupp (ovägt medel). Standard är `TRUE`.
+#'   jämförelsegruppens ovägda medel. Standard är `TRUE`.
 #'
 #' @return En data.frame med den valda kommunen, övriga kommuner
-#'   i samma län och, om valt, länets ovägda medelvärde.
+#'   i jämförelsegruppen och, om valt, gruppens ovägda medel.
 #'
 #' @examples
 #' \dontrun{
+#'
 #' hamta_jamforelse(
 #'   nyckeltal = "N01926",
 #'   kommun = "Ludvika",
@@ -1223,8 +1237,24 @@ forandring <- function(
 #'   nyckeltal = "N01926",
 #'   kommun = "Ludvika",
 #'   ar = 2025,
-#'   inkludera_grupp = FALSE
+#'   jamforelse = "kommungrupp"
 #' )
+#'
+#' hamta_jamforelse(
+#'   nyckeltal = "N01926",
+#'   kommun = "Ludvika",
+#'   ar = 2025,
+#'   jamforelse = "liknande"
+#' )
+#'
+#' hamta_jamforelse(
+#'   nyckeltal = "N01926",
+#'   kommun = "Ludvika",
+#'   ar = 2025,
+#'   jamforelse = "liknande",
+#'   verksamhet = "förskola"
+#' )
+#'
 #' }
 #'
 #' @export
@@ -1233,8 +1263,14 @@ hamta_jamforelse <- function(
     kommun,
     ar,
     kon = NULL,
+    jamforelse = "lan",
+    verksamhet = NULL,
     inkludera_grupp = TRUE
 ) {
+
+  # ---------------------------------------------------------
+  # Kontrollera argument
+  # ---------------------------------------------------------
 
   if (missing(kommun)) {
     stop("Du måste ange en kommun.")
@@ -1242,6 +1278,10 @@ hamta_jamforelse <- function(
 
   if (length(kommun) != 1) {
     stop("hamta_jamforelse() hanterar en kommun åt gången.")
+  }
+
+  if (missing(ar)) {
+    stop("Du måste ange minst ett år.")
   }
 
   if (
@@ -1252,7 +1292,27 @@ hamta_jamforelse <- function(
     stop("'inkludera_grupp' måste vara TRUE eller FALSE.")
   }
 
+  jamforelse <- tolower(
+    as.character(jamforelse)
+  )
+
+  giltiga_jamforelser <- c(
+    "lan",
+    "kommungrupp",
+    "liknande"
+  )
+
+  if (!jamforelse %in% giltiga_jamforelser) {
+    stop(
+      "Ogiltig jämförelse. Använd 'lan', 'kommungrupp' eller 'liknande'."
+    )
+  }
+
+
+  # ---------------------------------------------------------
   # Hitta vald kommun
+  # ---------------------------------------------------------
+
   kommuner <- hamta_kommuner(
     typ = "K"
   )
@@ -1286,7 +1346,11 @@ hamta_jamforelse <- function(
   kommun_id <- traff$municipality[1]
   kommun_namn <- traff$municipality_name[1]
 
+
+  # ---------------------------------------------------------
   # Hämta kommungrupper
+  # ---------------------------------------------------------
+
   grupper_svar <- jsonlite::fromJSON(
     "https://api.kolada.se/v3/municipality_groups/?page=1&per_page=5000"
   )
@@ -1294,55 +1358,431 @@ hamta_jamforelse <- function(
   grupper <- grupper_svar$values |>
     tidyr::unnest(members)
 
-  # Hitta länsgruppen för vald kommun
+  grupper$id <- as.character(
+    grupper$id
+  )
+
+  grupper$member_id <- as.character(
+    grupper$member_id
+  )
+
+  grupper$title <- as.character(
+    grupper$title
+  )
+
+
+  # ---------------------------------------------------------
+  # Alla grupper där vald kommun ingår
+  # ---------------------------------------------------------
+
   kommun_grupper <- grupper[
-    as.character(grupper$member_id) == kommun_id,
+    grupper$member_id == kommun_id,
     ,
     drop = FALSE
   ]
 
-  lansgrupp <- kommun_grupper[
-    grepl(
-      "läns kommuner.*ovägt medel",
-      kommun_grupper$title,
-      ignore.case = TRUE
-    ),
-    ,
-    drop = FALSE
-  ]
 
-  if (nrow(lansgrupp) == 0) {
-    stop(
-      "Kunde inte hitta någon länsgrupp för ",
-      kommun_namn,
-      "."
-    )
+  # ---------------------------------------------------------
+  # Välj jämförelsegrupp
+  # ---------------------------------------------------------
+
+  if (jamforelse == "lan") {
+
+    vald_grupp <- kommun_grupper[
+      grepl(
+        "läns kommuner.*ovägt medel",
+        kommun_grupper$title,
+        ignore.case = TRUE
+      ),
+      ,
+      drop = FALSE
+    ]
+
+    if (nrow(vald_grupp) == 0) {
+      stop(
+        "Kunde inte hitta någon länsgrupp för ",
+        kommun_namn,
+        "."
+      )
+    }
+
+    vald_grupp <- vald_grupp[
+      1,
+      ,
+      drop = FALSE
+    ]
+
+    jamforelse_namn <- "Övrig kommun i länet"
+    grupp_typ_namn <- "Länets kommuner"
   }
 
-  lansgrupp <- lansgrupp[1, , drop = FALSE]
+
+  # ---------------------------------------------------------
+  # SKR:s kommungruppsindelning
+  # ---------------------------------------------------------
+
+  if (jamforelse == "kommungrupp") {
+
+    skr_grupper <- c(
+      "Storstäder",
+      "Pendlingskommun nära storstad",
+      "Större stad",
+      "Pendlingskommun nära större stad",
+      "Lågpendlingskommun nära större stad",
+      "Mindre stad/tätort",
+      "Pendlingskommun nära mindre stad/tätort",
+      "Landsbygdskommun",
+      "Landsbygdskommun med besöksnäring"
+    )
+
+    skr_pattern <- paste(
+      skr_grupper,
+      collapse = "|"
+    )
+
+    vald_grupp <- kommun_grupper[
+      grepl(
+        skr_pattern,
+        kommun_grupper$title,
+        ignore.case = TRUE
+      ),
+      ,
+      drop = FALSE
+    ]
+
+    # Ta bort eventuella liknande-kommun-grupper
+    vald_grupp <- vald_grupp[
+      !grepl(
+        "^Liknande kommuner",
+        vald_grupp$title,
+        ignore.case = TRUE
+      ),
+      ,
+      drop = FALSE
+    ]
+
+    if (nrow(vald_grupp) == 0) {
+      stop(
+        "Kunde inte identifiera någon SKR-kommungrupp för ",
+        kommun_namn,
+        "."
+      )
+    }
+
+    if (nrow(vald_grupp) > 1) {
+
+      # Föredra grupp med ovägt medel
+      ovagt <- vald_grupp[
+        grepl(
+          "ovägt medel",
+          vald_grupp$title,
+          ignore.case = TRUE
+        ),
+        ,
+        drop = FALSE
+      ]
+
+      if (nrow(ovagt) > 0) {
+        vald_grupp <- ovagt
+      }
+    }
+
+    vald_grupp <- vald_grupp[
+      1,
+      ,
+      drop = FALSE
+    ]
+
+    jamforelse_namn <- "Övrig kommun i kommungruppen"
+    grupp_typ_namn <- "Kommungruppen"
+  }
+
+
+  # ---------------------------------------------------------
+  # Liknande kommuner
+  # ---------------------------------------------------------
+
+  if (jamforelse == "liknande") {
+
+    # Utgå från samtliga unika grupper, inte bara grupper
+    # där den valda kommunen finns som medlem
+    alla_grupper <- grupper[
+      !duplicated(grupper$id),
+      ,
+      drop = FALSE
+    ]
+
+    # Behåll grupper för "Liknande kommuner"
+    liknande_grupper <- alla_grupper[
+      grepl(
+        "^Liknande kommuner",
+        alla_grupper$title,
+        ignore.case = TRUE
+      ),
+      ,
+      drop = FALSE
+    ]
+
+    # -------------------------------------------------------
+    # Ta reda på vilken kommun gruppen avser
+    #
+    # Exempel:
+    # "Liknande kommuner förskola, Ludvika, 2024"
+    #
+    # Delarna blir:
+    # 1 = Liknande kommuner förskola
+    # 2 = Ludvika
+    # 3 = 2024
+    # -------------------------------------------------------
+
+    delar <- strsplit(
+      liknande_grupper$title,
+      ",\\s*"
+    )
+
+    fokuskommun <- vapply(
+      delar,
+      function(x) {
+
+        if (length(x) < 3) {
+          return(NA_character_)
+        }
+
+        trimws(x[length(x) - 1])
+      },
+      character(1)
+    )
+
+    # Behåll endast grupper som är skapade för vald kommun
+    liknande_grupper <- liknande_grupper[
+      tolower(fokuskommun) == tolower(kommun_namn),
+      ,
+      drop = FALSE
+    ]
+
+    if (nrow(liknande_grupper) == 0) {
+      stop(
+        "Inga grupper för liknande kommuner hittades för ",
+        kommun_namn,
+        "."
+      )
+    }
+
+    # -------------------------------------------------------
+    # Plocka ut verksamhetsnamnet
+    # -------------------------------------------------------
+
+    verksamhetsnamn <- sub(
+      ",.*$",
+      "",
+      liknande_grupper$title
+    )
+
+    verksamhetsnamn <- sub(
+      "^Liknande kommuner\\s*",
+      "",
+      verksamhetsnamn,
+      ignore.case = TRUE
+    )
+
+    verksamhetsnamn <- trimws(
+      verksamhetsnamn
+    )
+
+    # Gruppen "Liknande kommuner, övergripande, ..."
+    # ger annars ett tomt verksamhetsnamn
+    verksamhetsnamn[
+      verksamhetsnamn == ""
+    ] <- "övergripande"
+
+    liknande_grupper$verksamhet <- verksamhetsnamn
+
+    # -------------------------------------------------------
+    # Plocka ut året för gruppindelningen
+    # -------------------------------------------------------
+
+    grupp_ar <- vapply(
+      strsplit(
+        liknande_grupper$title,
+        ",\\s*"
+      ),
+      function(x) {
+
+        if (length(x) < 2) {
+          return(NA_real_)
+        }
+
+        suppressWarnings(
+          as.numeric(
+            trimws(x[length(x)])
+          )
+        )
+      },
+      numeric(1)
+    )
+
+    liknande_grupper$grupp_ar <- grupp_ar
+
+    # -------------------------------------------------------
+    # Om samma verksamhet finns för flera år:
+    # behåll senaste gruppindelningen
+    # -------------------------------------------------------
+
+    liknande_grupper <- liknande_grupper |>
+      dplyr::arrange(
+        verksamhet,
+        dplyr::desc(grupp_ar)
+      ) |>
+      dplyr::group_by(
+        verksamhet
+      ) |>
+      dplyr::slice_head(
+        n = 1
+      ) |>
+      dplyr::ungroup() |>
+      dplyr::arrange(
+        tolower(verksamhet)
+      )
+
+    # -------------------------------------------------------
+    # Om verksamheten anges direkt
+    # -------------------------------------------------------
+
+    if (!is.null(verksamhet)) {
+
+      matchning <- liknande_grupper[
+        tolower(liknande_grupper$verksamhet) ==
+          tolower(verksamhet),
+        ,
+        drop = FALSE
+      ]
+
+      # Försök delmatchning om exakt match saknas
+      if (nrow(matchning) == 0) {
+
+        matchning <- liknande_grupper[
+          grepl(
+            verksamhet,
+            liknande_grupper$verksamhet,
+            ignore.case = TRUE,
+            fixed = TRUE
+          ),
+          ,
+          drop = FALSE
+        ]
+      }
+
+      if (nrow(matchning) == 0) {
+        stop(
+          "Ingen grupp för liknande kommuner hittades för verksamheten: ",
+          verksamhet
+        )
+      }
+
+      if (nrow(matchning) > 1) {
+        stop(
+          "Flera verksamheter matchade '",
+          verksamhet,
+          "'. Ange ett mer exakt namn."
+        )
+      }
+
+      vald_grupp <- matchning
+
+    } else {
+
+      # -----------------------------------------------------
+      # Visa tillgängliga grupper i Console
+      # -----------------------------------------------------
+
+      meny_text <- paste0(
+        liknande_grupper$verksamhet,
+        " (",
+        liknande_grupper$grupp_ar,
+        ")"
+      )
+
+      cat(
+        "\nVälj grupp för liknande kommuner för ",
+        kommun_namn,
+        ":\n\n",
+        sep = ""
+      )
+
+      for (i in seq_along(meny_text)) {
+        cat(
+          i,
+          ": ",
+          meny_text[i],
+          "\n",
+          sep = ""
+        )
+      }
+
+      cat("\n")
+
+      val <- suppressWarnings(
+        as.integer(
+          readline("Selection: ")
+        )
+      )
+
+      if (
+        is.na(val) ||
+        val < 1 ||
+        val > length(meny_text)
+      ) {
+        stop("Ogiltigt val.")
+      }
+
+      vald_grupp <- liknande_grupper[
+        val,
+        ,
+        drop = FALSE
+      ]
+    }
+
+    jamforelse_namn <- "Liknande kommun"
+    grupp_typ_namn <- "Liknande kommuner"
+  }
+
+  # ---------------------------------------------------------
+  # Grupp-ID och gruppnamn
+  # ---------------------------------------------------------
 
   grupp_id <- as.character(
-    lansgrupp$id[1]
+    vald_grupp$id[1]
   )
 
   grupp_namn <- as.character(
-    lansgrupp$title[1]
+    vald_grupp$title[1]
   )
 
-  # Hitta alla kommuner i samma länsgrupp
-  kommuner_i_lanet <- grupper[
+
+  # ---------------------------------------------------------
+  # Hitta alla kommuner som ingår i vald grupp
+  # ---------------------------------------------------------
+
+  kommuner_i_gruppen <- grupper[
     grupper$id == grupp_id,
     ,
     drop = FALSE
   ]
 
   kommun_idn <- unique(
-    as.character(
-      kommuner_i_lanet$member_id
+    c(
+      kommun_id,
+      as.character(
+        kommuner_i_gruppen$member_id
+      )
     )
   )
 
-  # Hämta samtliga kommunvärden i länet
+
+  # ---------------------------------------------------------
+  # Hämta värden för alla kommuner i gruppen
+  # ---------------------------------------------------------
+
   data_kommuner <- hamta_fran_kolada(
     nyckeltal = nyckeltal,
     kommun = kommun_idn,
@@ -1357,41 +1797,59 @@ hamta_jamforelse <- function(
         jamforelsetyp = dplyr::if_else(
           municipality == kommun_id,
           "Vald kommun",
-          "Övrig kommun i länet"
-        )
+          jamforelse_namn
+        ),
+        jamforelsegrupp = grupp_namn
       )
   }
 
-  # Hämta länets ovägda medel endast om användaren vill ha det
+
+  # ---------------------------------------------------------
+  # Hämta gruppens ovägda medel
+  # ---------------------------------------------------------
+
   if (inkludera_grupp) {
 
     data_grupp <- lapply(
       nyckeltal,
       function(kpi_id) {
 
-        url <- paste0(
-          "https://api.kolada.se/v3/data/kpi/",
-          kpi_id,
-          "/municipality/",
-          grupp_id,
-          "/year/",
-          paste(ar, collapse = ","),
-          "?page=1&per_page=5000"
+        # Hämta ett år i taget för att undvika långa URL:er
+        data_ar <- lapply(
+          ar,
+          function(ar_id) {
+
+            url <- paste0(
+              "https://api.kolada.se/v3/data/kpi/",
+              kpi_id,
+              "/municipality/",
+              grupp_id,
+              "/year/",
+              ar_id,
+              "?page=1&per_page=5000"
+            )
+
+            svar <- tryCatch(
+              jsonlite::fromJSON(url),
+              error = function(e) NULL
+            )
+
+            if (
+              is.null(svar) ||
+              is.null(svar$values) ||
+              length(svar$values) == 0
+            ) {
+              return(NULL)
+            }
+
+            data.frame(svar$values) |>
+              tidyr::unnest(values)
+          }
         )
 
-        svar <- jsonlite::fromJSON(
-          url
+        dplyr::bind_rows(
+          data_ar
         )
-
-        if (
-          is.null(svar$values) ||
-          length(svar$values) == 0
-        ) {
-          return(NULL)
-        }
-
-        data.frame(svar$values) |>
-          tidyr::unnest(values)
       }
     )
 
@@ -1402,13 +1860,14 @@ hamta_jamforelse <- function(
     if (nrow(data_grupp) > 0) {
 
       if (!is.null(kon)) {
+
         data_grupp <- data_grupp |>
           dplyr::filter(
             gender %in% toupper(kon)
           )
       }
 
-      # Hämta KPI-namn
+      # KPI-namn
       kpi_namn <- lapply(
         unique(data_grupp$kpi),
         function(kpi_id) {
@@ -1439,7 +1898,8 @@ hamta_jamforelse <- function(
         ) |>
         dplyr::mutate(
           municipality_name = grupp_namn,
-          jamforelsetyp = "Länets kommuner"
+          jamforelsetyp = grupp_typ_namn,
+          jamforelsegrupp = grupp_namn
         ) |>
         dplyr::select(
           municipality,
@@ -1450,7 +1910,8 @@ hamta_jamforelse <- function(
           value,
           gender,
           status,
-          jamforelsetyp
+          jamforelsetyp,
+          jamforelsegrupp
         )
     }
 
@@ -1459,13 +1920,25 @@ hamta_jamforelse <- function(
     data_grupp <- data.frame()
   }
 
-  # Slå ihop
+
+  # ---------------------------------------------------------
+  # Slå ihop resultat
+  # ---------------------------------------------------------
+
   resultat <- dplyr::bind_rows(
     data_kommuner,
     data_grupp
-  ) |>
+  )
+
+  if (nrow(resultat) == 0) {
+    message("Ingen data hittades för jämförelsen.")
+    return(data.frame())
+  }
+
+  resultat <- resultat |>
     dplyr::select(
       jamforelsetyp,
+      jamforelsegrupp,
       municipality,
       municipality_name,
       kpi,
@@ -1476,21 +1949,21 @@ hamta_jamforelse <- function(
       status
     ) |>
     dplyr::mutate(
-      jamforelsetyp = factor(
-        jamforelsetyp,
-        levels = c(
-          "Vald kommun",
-          "Övrig kommun i länet",
-          "Länets kommuner"
-        )
+      sortering = dplyr::case_when(
+        jamforelsetyp == "Vald kommun" ~ 1,
+        jamforelsetyp == grupp_typ_namn ~ 3,
+        TRUE ~ 2
       )
     ) |>
     dplyr::arrange(
       kpi,
       period,
       gender,
-      jamforelsetyp,
+      sortering,
       municipality_name
+    ) |>
+    dplyr::select(
+      -sortering
     )
 
   rownames(resultat) <- NULL
