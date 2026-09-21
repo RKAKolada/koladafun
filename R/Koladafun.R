@@ -1971,12 +1971,474 @@ hamta_jamforelse <- function(
   as.data.frame(resultat)
 }
 
-#' koladafun: Funktioner för Kolada
+# =========================================================
+# English wrappers
+# =========================================================
+
+
+#' Get data from Kolada
 #'
-#' `koladafun` är ett R-paket med funktioner för att söka,
-#' utforska och hämta data från Kolada.
+#' English wrapper for [hamta_fran_kolada()].
 #'
-#' @section Funktioner:
+#' @param kpi One or more Kolada KPI IDs.
+#' @param municipality Optional municipality/region name or code.
+#' @param year Optional year or vector of years.
+#' @param gender Optional gender filter:
+#'   `"T"` = total, `"K"` = women, `"M"` = men.
+#' @param municipality_type Optional area type:
+#'   `"K"` = municipality, `"R"` = region.
+#' @param per_page Number of observations per API page.
+#' @param batch_size Number of municipalities/regions per API request.
+#'
+#' @return A data.frame with data from Kolada.
+#'
+#' @examples
+#' \dontrun{
+#' get_from_kolada(
+#'   kpi = "N01926",
+#'   municipality = "Haninge",
+#'   year = 2025
+#' )
+#' }
+#'
+#' @export
+get_from_kolada <- function(
+    kpi,
+    municipality = NULL,
+    year = NULL,
+    gender = NULL,
+    municipality_type = NULL,
+    per_page = 5000,
+    batch_size = 25
+) {
+
+  hamta_fran_kolada(
+    nyckeltal = kpi,
+    kommun = municipality,
+    ar = year,
+    kon = gender,
+    kommuntyp = municipality_type,
+    per_page = per_page,
+    batch_size = batch_size
+  )
+}
+
+
+#' Search for KPIs in Kolada
+#'
+#' English wrapper for [sok_nyckeltal()].
+#'
+#' @param query Search term or words.
+#' @param max_results Maximum number of results. Default is 50.
+#'
+#' @return A data.frame with matching KPIs.
+#'
+#' @examples
+#' \dontrun{
+#' search_kpi("preschool")
+#' search_kpi("N01926")
+#' }
+#'
+#' @export
+search_kpi <- function(
+    query,
+    max_results = 50
+) {
+
+  sok_nyckeltal(
+    sok = query,
+    max_resultat = max_results
+  )
+}
+
+
+#' Get information about KPIs
+#'
+#' English wrapper for [info_nyckeltal()].
+#'
+#' @param kpi One or more Kolada KPI IDs.
+#'
+#' @return A data.frame with KPI metadata.
+#'
+#' @examples
+#' \dontrun{
+#' kpi_info("N01926")
+#' kpi_info(c("N01926", "N17454"))
+#' }
+#'
+#' @export
+kpi_info <- function(kpi) {
+
+  info_nyckeltal(
+    nyckeltal = kpi
+  )
+}
+
+
+#' Get municipalities and regions
+#'
+#' English wrapper for [hamta_kommuner()].
+#'
+#' @param type Optional area type:
+#'   `"K"` = municipality, `"R"` = region.
+#' @param search Optional search text for name or code.
+#'
+#' @return A data.frame with municipalities and regions.
+#'
+#' @examples
+#' \dontrun{
+#' get_municipalities()
+#' get_municipalities(type = "K")
+#' get_municipalities(search = "Han")
+#' }
+#'
+#' @export
+get_municipalities <- function(
+    type = NULL,
+    search = NULL
+) {
+
+  hamta_kommuner(
+    typ = type,
+    sok = search
+  )
+}
+
+
+#' Get available years
+#'
+#' English wrapper for [tillgangliga_ar()].
+#'
+#' @param kpi One or more Kolada KPI IDs.
+#' @param municipality Optional municipality or region name/code.
+#' @param municipality_type Optional area type:
+#'   `"K"` = municipality, `"R"` = region.
+#'
+#' @return A data.frame with available years.
+#'
+#' @examples
+#' \dontrun{
+#' available_years(
+#'   kpi = "N01926",
+#'   municipality = "Haninge"
+#' )
+#' }
+#'
+#' @export
+available_years <- function(
+    kpi,
+    municipality = NULL,
+    municipality_type = NULL
+) {
+
+  tillgangliga_ar(
+    nyckeltal = kpi,
+    kommun = municipality,
+    kommuntyp = municipality_type
+  )
+}
+
+
+#' Get latest available value
+#'
+#' English wrapper for [senaste_varde()].
+#'
+#' @param kpi One or more Kolada KPI IDs.
+#' @param municipality Optional municipality or region.
+#' @param gender Optional gender filter.
+#' @param municipality_type Optional area type:
+#'   `"K"` = municipality, `"R"` = region.
+#' @param include_missing Logical. If `FALSE`, the latest observation
+#'   with an actual value is returned. If `TRUE`, observations with
+#'   missing values due to e.g. confidentiality or missing data are
+#'   also accepted. Default is `FALSE`.
+#'
+#' @return A data.frame with the latest available observation.
+#'
+#' @examples
+#' \dontrun{
+#' latest_value(
+#'   kpi = "N01926",
+#'   municipality = "Haninge"
+#' )
+#' }
+#'
+#' @export
+latest_value <- function(
+    kpi,
+    municipality = NULL,
+    gender = NULL,
+    municipality_type = NULL,
+    include_missing = FALSE
+) {
+
+  senaste_varde(
+    nyckeltal = kpi,
+    kommun = municipality,
+    kon = gender,
+    kommuntyp = municipality_type,
+    bortfall = include_missing
+  )
+}
+
+
+#' Calculate change between two years
+#'
+#' English wrapper for [forandring()].
+#'
+#' @param kpi One or more Kolada KPI IDs.
+#' @param municipality Optional municipality or region name/code.
+#' @param start_year First year in the comparison.
+#' @param end_year Last year in the comparison.
+#' @param gender Optional gender filter.
+#' @param municipality_type Optional area type:
+#'   `"K"` = municipality, `"R"` = region.
+#'
+#' @return A data.frame with values for both years and calculated change.
+#'
+#' @export
+change <- function(
+    kpi,
+    municipality = NULL,
+    start_year,
+    end_year,
+    gender = NULL,
+    municipality_type = NULL
+) {
+
+  resultat <- forandring(
+    nyckeltal = kpi,
+    kommun = municipality,
+    fran = start_year,
+    till = end_year,
+    kon = gender,
+    kommuntyp = municipality_type
+  )
+
+  if (nrow(resultat) == 0) {
+    return(resultat)
+  }
+
+  resultat <- resultat |>
+    dplyr::rename(
+      start_year = fran,
+      end_year = till,
+      start_value = varde_fran,
+      end_value = varde_till,
+      change = forandring,
+      percentage_change = forandring_procent
+    )
+
+  as.data.frame(resultat)
+}
+
+
+#' Get comparison data for a municipality
+#'
+#' English wrapper for [hamta_jamforelse()].
+#'
+#' A municipality can be compared with municipalities in the same
+#' county, the same SKR municipality group, or a group of similar
+#' municipalities.
+#'
+#' @param kpi One or more Kolada KPI IDs.
+#' @param municipality Municipality name or code.
+#' @param year One or more years.
+#' @param gender Optional gender filter:
+#'   `"T"` = total, `"K"` = women and `"M"` = men.
+#' @param comparison Comparison type:
+#'   `"county"`, `"municipality_group"` or `"similar"`.
+#'   Default is `"county"`.
+#' @param area Optional service area when `comparison = "similar"`.
+#'   Examples include `"preschool"`, `"compulsory_school"` and
+#'   `"elderly_care"`. If omitted, an interactive menu is shown.
+#' @param include_group Logical. If `TRUE`, the group value is included.
+#'   Default is `TRUE`.
+#'
+#' @return A data.frame with comparison data. The result includes
+#'   `comparison_type` and `comparison_group`, indicating the type
+#'   of observation and the Kolada group used for the comparison.
+#'
+#' @examples
+#' \dontrun{
+#'
+#' # Compare with municipalities in the same county
+#' get_comparison(
+#'   kpi = "N01926",
+#'   municipality = "Ludvika",
+#'   year = 2025,
+#'   comparison = "county"
+#' )
+#'
+#' # Compare with the same SKR municipality group
+#' get_comparison(
+#'   kpi = "N01926",
+#'   municipality = "Ludvika",
+#'   year = 2025,
+#'   comparison = "municipality_group"
+#' )
+#'
+#' # Compare with similar municipalities using the interactive menu
+#' get_comparison(
+#'   kpi = "N01926",
+#'   municipality = "Ludvika",
+#'   year = 2025,
+#'   comparison = "similar"
+#' )
+#'
+#' # Specify the service area directly
+#' get_comparison(
+#'   kpi = "N01926",
+#'   municipality = "Ludvika",
+#'   year = 2025,
+#'   comparison = "similar",
+#'   area = "preschool"
+#' )
+#'
+#' }
+#'
+#' @export
+get_comparison <- function(
+    kpi,
+    municipality,
+    year,
+    gender = NULL,
+    comparison = "county",
+    area = NULL,
+    include_group = TRUE
+) {
+
+  # ---------------------------------------------------------
+  # Translate comparison type
+  # ---------------------------------------------------------
+
+  comparison_sv <- switch(
+    tolower(comparison),
+
+    "county" = "lan",
+    "lan" = "lan",
+
+    "municipality_group" = "kommungrupp",
+    "municipality group" = "kommungrupp",
+    "kommungrupp" = "kommungrupp",
+
+    "similar" = "liknande",
+    "liknande" = "liknande",
+
+    stop(
+      "Invalid comparison. Use 'county', ",
+      "'municipality_group' or 'similar'."
+    )
+  )
+
+
+  # ---------------------------------------------------------
+  # Translate common service areas
+  # ---------------------------------------------------------
+
+  if (!is.null(area)) {
+
+    area_lower <- tolower(area)
+
+    area_map <- c(
+      "labour_market" = "arbetsmarknad",
+      "labor_market" = "arbetsmarknad",
+      "economic_assistance" = "ekonomiskt bistånd",
+      "leisure_time_centre" = "fritidshem",
+      "leisure_time_center" = "fritidshem",
+      "preschool" = "förskola",
+      "compulsory_school" = "grundskola",
+      "upper_secondary_school" = "gymnasieskola",
+      "individual_and_family_care" = "IFO",
+      "ifo" = "IFO",
+      "lss" = "LSS",
+      "rescue_service" = "räddningstjänst",
+      "socioeconomic" = "socioekonomi",
+      "elderly_care" = "äldreomsorg",
+      "overall" = "övergripande"
+    )
+
+    if (area_lower %in% names(area_map)) {
+
+      area <- unname(
+        area_map[area_lower]
+      )
+    }
+  }
+
+
+  # ---------------------------------------------------------
+  # Run Swedish function
+  # ---------------------------------------------------------
+
+  resultat <- hamta_jamforelse(
+    nyckeltal = kpi,
+    kommun = municipality,
+    ar = year,
+    kon = gender,
+    jamforelse = comparison_sv,
+    verksamhet = area,
+    inkludera_grupp = include_group
+  )
+
+
+  # ---------------------------------------------------------
+  # Return empty result if no data was found
+  # ---------------------------------------------------------
+
+  if (nrow(resultat) == 0) {
+    return(resultat)
+  }
+
+
+  # ---------------------------------------------------------
+  # Rename result columns to English
+  # ---------------------------------------------------------
+
+  resultat <- resultat |>
+    dplyr::rename(
+      comparison_type = jamforelsetyp,
+      comparison_group = jamforelsegrupp
+    )
+
+
+  # ---------------------------------------------------------
+  # Translate comparison type values
+  # ---------------------------------------------------------
+
+  resultat <- resultat |>
+    dplyr::mutate(
+      comparison_type = dplyr::case_when(
+        comparison_type == "Vald kommun" ~ "Selected municipality",
+        comparison_type == "Övrig kommun i länet" ~ "Other municipality in county",
+        comparison_type == "Länets kommuner" ~ "County municipalities",
+        comparison_type == "Övrig kommun i kommungruppen" ~
+          "Other municipality in municipality group",
+        comparison_type == "Kommungruppen" ~ "Municipality group",
+        comparison_type == "Liknande kommun" ~ "Similar municipality",
+        comparison_type == "Liknande kommuner" ~ "Similar municipalities",
+        TRUE ~ as.character(comparison_type)
+      )
+    )
+
+
+  # ---------------------------------------------------------
+  # Return data.frame
+  # ---------------------------------------------------------
+
+  rownames(resultat) <- NULL
+
+  as.data.frame(resultat)
+}
+
+#' koladafun: Functions for Kolada
+#'
+#' `koladafun` is an R package with functions for searching,
+#' exploring and retrieving data from Kolada.
+#'
+#' Paketet kan användas med både svenska och engelska funktionsnamn.
+#'
+#' @section Svenska funktioner:
 #'
 #' * [hamta_fran_kolada()] - Hämta data från Kolada.
 #' * [sok_nyckeltal()] - Sök efter nyckeltal.
@@ -1985,11 +2447,22 @@ hamta_jamforelse <- function(
 #' * [tillgangliga_ar()] - Visa tillgängliga år.
 #' * [senaste_varde()] - Hämta senaste tillgängliga värde.
 #' * [forandring()] - Beräkna förändring mellan två år.
-#' * [hamta_jamforelse()] - Jämför en kommun med länets kommuner.
+#' * [hamta_jamforelse()] - Jämför en kommun med andra kommuner.
 #'
-#' @section Mer information:
+#' @section English functions:
 #'
-#' Paketets README och källkod finns på GitHub:
+#' * [get_from_kolada()] - Get data from Kolada.
+#' * [search_kpi()] - Search for KPIs.
+#' * [kpi_info()] - Get KPI metadata.
+#' * [get_municipalities()] - Get municipalities and regions.
+#' * [available_years()] - Get available years.
+#' * [latest_value()] - Get the latest available value.
+#' * [change()] - Calculate change between two years.
+#' * [get_comparison()] - Compare a municipality with other municipalities.
+#'
+#' @section More information:
+#'
+#' README and source code are available on GitHub:
 #' \url{https://github.com/RKAkolada/koladafun}
 #'
 #' @docType package

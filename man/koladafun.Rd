@@ -4,12 +4,15 @@
 \name{koladafun}
 \alias{koladafun-package}
 \alias{koladafun}
-\title{koladafun: Funktioner för Kolada}
+\title{koladafun: Functions for Kolada}
 \description{
-\code{koladafun} är ett R-paket med funktioner för att söka,
-utforska och hämta data från Kolada.
+\code{koladafun} is an R package with functions for searching,
+exploring and retrieving data from Kolada.
 }
-\section{Funktioner}{
+\details{
+Paketet kan användas med både svenska och engelska funktionsnamn.
+}
+\section{Svenska funktioner}{
 
 \itemize{
 \item \code{\link[=hamta_fran_kolada]{hamta_fran_kolada()}} - Hämta data från Kolada.
@@ -19,14 +22,28 @@ utforska och hämta data från Kolada.
 \item \code{\link[=tillgangliga_ar]{tillgangliga_ar()}} - Visa tillgängliga år.
 \item \code{\link[=senaste_varde]{senaste_varde()}} - Hämta senaste tillgängliga värde.
 \item \code{\link[=forandring]{forandring()}} - Beräkna förändring mellan två år.
-\item \code{\link[=hamta_jamforelse]{hamta_jamforelse()}} - Jämför en kommun med länets kommuner.
+\item \code{\link[=hamta_jamforelse]{hamta_jamforelse()}} - Jämför en kommun med andra kommuner.
 }
 }
 
-\section{Mer information}{
+\section{English functions}{
+
+\itemize{
+\item \code{\link[=get_from_kolada]{get_from_kolada()}} - Get data from Kolada.
+\item \code{\link[=search_kpi]{search_kpi()}} - Search for KPIs.
+\item \code{\link[=kpi_info]{kpi_info()}} - Get KPI metadata.
+\item \code{\link[=get_municipalities]{get_municipalities()}} - Get municipalities and regions.
+\item \code{\link[=available_years]{available_years()}} - Get available years.
+\item \code{\link[=latest_value]{latest_value()}} - Get the latest available value.
+\item \code{\link[=change]{change()}} - Calculate change between two years.
+\item \code{\link[=get_comparison]{get_comparison()}} - Compare a municipality with other municipalities.
+}
+}
+
+\section{More information}{
 
 
-Paketets README och källkod finns på GitHub:
+README and source code are available on GitHub:
 \url{https://github.com/RKAkolada/koladafun}
 }
 
