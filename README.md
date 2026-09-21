@@ -1,19 +1,18 @@
 # koladafun
 
-Ett R-paket med funktioner för att söka, utforska och hämta data från
-Kolada.
+Ett R-paket med funktioner för att söka, utforska och hämta data från Kolada.
 
 ## Installation
 
 Installera först paketet `remotes` om du inte redan har det:
 
-``` r
+```r
 install.packages("remotes")
 ```
 
 Installera sedan `koladafun` från GitHub:
 
-``` r
+```r
 remotes::install_github(
   "RKAkolada/koladafun",
   build = FALSE
@@ -24,7 +23,7 @@ remotes::install_github(
 
 Ladda paketet:
 
-``` r
+```r
 library(koladafun)
 ```
 
@@ -32,20 +31,19 @@ library(koladafun)
 
 Det enda obligatoriska argumentet är `nyckeltal`.
 
-``` r
+```r
 data <- hamta_fran_kolada(
   nyckeltal = "N01926"
 )
 ```
 
-Om kommun och år inte anges hämtas data för alla tillgängliga områden
-och år.
+Om kommun och år inte anges hämtas data för alla tillgängliga områden och år.
 
 ### Välj kommun med namn eller kommunkod
 
 Kommuner kan anges antingen med kommunkod:
 
-``` r
+```r
 data <- hamta_fran_kolada(
   nyckeltal = "N01926",
   kommun = "0136",
@@ -55,7 +53,7 @@ data <- hamta_fran_kolada(
 
 eller med kommunnamn:
 
-``` r
+```r
 data <- hamta_fran_kolada(
   nyckeltal = "N01926",
   kommun = "Haninge",
@@ -63,10 +61,9 @@ data <- hamta_fran_kolada(
 )
 ```
 
-Det går även att ange flera kommuner samtidigt och att blanda kommunnamn
-och kommunkoder:
+Det går även att ange flera kommuner samtidigt och att blanda kommunnamn och kommunkoder:
 
-``` r
+```r
 data <- hamta_fran_kolada(
   nyckeltal = "N01926",
   kommun = c("Haninge", "0180", "Mjölby"),
@@ -78,7 +75,7 @@ data <- hamta_fran_kolada(
 
 Ett enskilt år kan anges:
 
-``` r
+```r
 data <- hamta_fran_kolada(
   nyckeltal = "N01926",
   kommun = "Haninge",
@@ -88,7 +85,7 @@ data <- hamta_fran_kolada(
 
 Flera år kan anges som ett intervall:
 
-``` r
+```r
 data <- hamta_fran_kolada(
   nyckeltal = "N01926",
   kommun = "Haninge",
@@ -96,8 +93,7 @@ data <- hamta_fran_kolada(
 )
 ```
 
-Om något av de efterfrågade åren saknar data hämtas data för de år som
-finns tillgängliga och ett meddelande visas om vilka år som saknas.
+Om något av de efterfrågade åren saknar data hämtas data för de år som finns tillgängliga och ett meddelande visas om vilka år som saknas.
 
 Om `ar` inte anges hämtas alla tillgängliga år.
 
@@ -105,7 +101,7 @@ Om `ar` inte anges hämtas alla tillgängliga år.
 
 Flera nyckeltal kan anges samtidigt:
 
-``` r
+```r
 data <- hamta_fran_kolada(
   nyckeltal = c("N01926", "N17454"),
   kommun = "Haninge",
@@ -117,7 +113,7 @@ data <- hamta_fran_kolada(
 
 Det går att filtrera resultatet på kön:
 
-``` r
+```r
 data <- hamta_fran_kolada(
   nyckeltal = "N01926",
   kommun = "Haninge",
@@ -128,21 +124,20 @@ data <- hamta_fran_kolada(
 
 `kon` kan anges som:
 
--   `"T"` = total
--   `"K"` = kvinnor
--   `"M"` = män
--   `c("K", "M")` = kvinnor och män
+- `"T"` = total
+- `"K"` = kvinnor
+- `"M"` = män
+- `c("K", "M")` = kvinnor och män
 
 Om `kon` inte anges hämtas alla tillgängliga kön.
 
 ### Filtrera på kommuner eller regioner
 
-Argumentet `kommuntyp` kan användas för att begränsa hämtningen till
-kommuner eller regioner.
+Argumentet `kommuntyp` kan användas för att begränsa hämtningen till kommuner eller regioner.
 
 För att endast hämta kommuner:
 
-``` r
+```r
 data <- hamta_fran_kolada(
   nyckeltal = "N01926",
   kommuntyp = "K",
@@ -152,7 +147,7 @@ data <- hamta_fran_kolada(
 
 För att endast hämta regioner:
 
-``` r
+```r
 data <- hamta_fran_kolada(
   nyckeltal = "N01926",
   kommuntyp = "R",
@@ -162,15 +157,14 @@ data <- hamta_fran_kolada(
 
 `kommuntyp` kan anges som:
 
--   `"K"` = kommun
--   `"R"` = region
+- `"K"` = kommun
+- `"R"` = region
 
 ### Kombinera flera val
 
-Argumenten kan kombineras. Exempelvis kan data för flera nyckeltal,
-kommuner och år hämtas och samtidigt filtreras på kön:
+Argumenten kan kombineras. Exempelvis kan data för flera nyckeltal, kommuner och år hämtas och samtidigt filtreras på kön:
 
-``` r
+```r
 data <- hamta_fran_kolada(
   nyckeltal = c("N01926", "N17454"),
   kommun = c("Haninge", "0180", "Mjölby"),
@@ -183,51 +177,35 @@ data <- hamta_fran_kolada(
 
 De viktigaste argumenten i `hamta_fran_kolada()` är:
 
-  -----------------------------------------------------------------------
-  Argument                            Beskrivning
-  ----------------------------------- -----------------------------------
-  `nyckeltal`                         Ett eller flera nyckeltals-ID.
-                                      Obligatoriskt.
-
-  `kommun`                            Kommun-/regionnamn eller kod. Om
-                                      det utelämnas hämtas alla områden.
-
-  `ar`                                Ett eller flera år. Om det
-                                      utelämnas hämtas alla tillgängliga
-                                      år.
-
-  `kon`                               `"T"`, `"K"` eller `"M"`. Kan även
-                                      anges som en kombination.
-
-  `kommuntyp`                         `"K"` för kommun eller `"R"` för
-                                      region.
-  -----------------------------------------------------------------------
+| Argument | Beskrivning |
+|---|---|
+| `nyckeltal` | Ett eller flera nyckeltals-ID. Obligatoriskt. |
+| `kommun` | Kommun-/regionnamn eller kod. Om det utelämnas hämtas alla områden. |
+| `ar` | Ett eller flera år. Om det utelämnas hämtas alla tillgängliga år. |
+| `kon` | `"T"`, `"K"` eller `"M"`. Kan även anges som en kombination. |
+| `kommuntyp` | `"K"` för kommun eller `"R"` för region. |
 
 Mer information om funktionen finns även i R:
 
-``` r
+```r
 ?hamta_fran_kolada
 ```
 
 ## Fler funktioner
 
-Utöver `hamta_fran_kolada()` finns flera hjälpfunktioner för att hitta
-nyckeltal, läsa metadata, lista kommuner och regioner, identifiera
-tillgängliga år, hämta senaste värden, beräkna förändringar och jämföra
-kommuner utifrån olika jämförelsegrupper.
+Utöver `hamta_fran_kolada()` finns flera hjälpfunktioner för att hitta nyckeltal, läsa metadata, lista kommuner och regioner, identifiera tillgängliga år, hämta senaste värden, beräkna förändringar och jämföra kommuner utifrån olika jämförelsegrupper.
 
 ### Sök efter nyckeltal
 
-Om du inte känner till ett nyckeltals-ID kan du söka efter nyckeltal med
-`sok_nyckeltal()`.
+Om du inte känner till ett nyckeltals-ID kan du söka efter nyckeltal med `sok_nyckeltal()`.
 
-``` r
+```r
 sok_nyckeltal("förskola")
 ```
 
 Det går även att använda flera sökord:
 
-``` r
+```r
 sok_nyckeltal("kostnad förskola")
 ```
 
@@ -235,7 +213,7 @@ Sökningen görs bland annat i nyckeltalets ID, namn och beskrivning.
 
 Antalet träffar kan begränsas med `max_resultat`:
 
-``` r
+```r
 sok_nyckeltal(
   "förskola",
   max_resultat = 20
@@ -244,39 +222,37 @@ sok_nyckeltal(
 
 Det går också att söka direkt på ett nyckeltals-ID:
 
-``` r
+```r
 sok_nyckeltal("N01926")
 ```
 
 Mer information:
 
-``` r
+```r
 ?sok_nyckeltal
 ```
 
 ### Visa information om ett nyckeltal
 
-Med `info_nyckeltal()` kan metadata för ett eller flera nyckeltal
-hämtas.
+Med `info_nyckeltal()` kan metadata för ett eller flera nyckeltal hämtas.
 
-``` r
+```r
 info_nyckeltal("N01926")
 ```
 
 Flera nyckeltal kan anges samtidigt:
 
-``` r
+```r
 info_nyckeltal(
   c("N01926", "N17454")
 )
 ```
 
-Funktionen returnerar den metadata som finns tillgänglig för nyckeltalen
-i Kolada, exempelvis namn och beskrivning.
+Funktionen returnerar den metadata som finns tillgänglig för nyckeltalen i Kolada, exempelvis namn och beskrivning.
 
 Mer information:
 
-``` r
+```r
 ?info_nyckeltal
 ```
 
@@ -286,13 +262,13 @@ Med `hamta_kommuner()` kan en lista över kommuner och regioner hämtas.
 
 Alla områden:
 
-``` r
+```r
 hamta_kommuner()
 ```
 
 Endast kommuner:
 
-``` r
+```r
 hamta_kommuner(
   typ = "K"
 )
@@ -300,7 +276,7 @@ hamta_kommuner(
 
 Endast regioner:
 
-``` r
+```r
 hamta_kommuner(
   typ = "R"
 )
@@ -308,7 +284,7 @@ hamta_kommuner(
 
 Det går även att söka efter ett namn eller en kod:
 
-``` r
+```r
 hamta_kommuner(
   sok = "Han"
 )
@@ -316,7 +292,7 @@ hamta_kommuner(
 
 Filtrering och sökning kan kombineras:
 
-``` r
+```r
 hamta_kommuner(
   typ = "K",
   sok = "Han"
@@ -325,27 +301,26 @@ hamta_kommuner(
 
 `typ` kan anges som:
 
--   `"K"` = kommun
--   `"R"` = region
+- `"K"` = kommun
+- `"R"` = region
 
 Mer information:
 
-``` r
+```r
 ?hamta_kommuner
 ```
 
 ### Visa tillgängliga år
 
-Med `tillgangliga_ar()` kan du kontrollera vilka år som har data för ett
-visst nyckeltal.
+Med `tillgangliga_ar()` kan du kontrollera vilka år som har data för ett visst nyckeltal.
 
-``` r
+```r
 tillgangliga_ar("N01926")
 ```
 
 Det går också att begränsa sökningen till en viss kommun eller region:
 
-``` r
+```r
 tillgangliga_ar(
   "N01926",
   kommun = "Haninge"
@@ -354,7 +329,7 @@ tillgangliga_ar(
 
 Kommun kan anges med namn eller kod:
 
-``` r
+```r
 tillgangliga_ar(
   "N01926",
   kommun = "0136"
@@ -363,7 +338,7 @@ tillgangliga_ar(
 
 Det går även att begränsa resultatet till kommuner eller regioner:
 
-``` r
+```r
 tillgangliga_ar(
   "N01926",
   kommuntyp = "K"
@@ -372,17 +347,15 @@ tillgangliga_ar(
 
 Mer information:
 
-``` r
+```r
 ?tillgangliga_ar
 ```
 
 ### Hämta senaste tillgängliga värde
 
-Med `senaste_varde()` kan det senaste tillgängliga värdet för ett
-nyckeltal hämtas utan att användaren själv behöver veta vilket det
-senaste publicerade året är.
+Med `senaste_varde()` kan det senaste tillgängliga värdet för ett nyckeltal hämtas utan att användaren själv behöver veta vilket det senaste publicerade året är.
 
-``` r
+```r
 senaste_varde(
   nyckeltal = "N01926",
   kommun = "Haninge"
@@ -391,7 +364,7 @@ senaste_varde(
 
 Det går också att filtrera på kön:
 
-``` r
+```r
 senaste_varde(
   nyckeltal = "N01926",
   kommun = "Haninge",
@@ -401,7 +374,7 @@ senaste_varde(
 
 För flera kommuner:
 
-``` r
+```r
 senaste_varde(
   nyckeltal = "N01926",
   kommun = c(
@@ -414,25 +387,20 @@ senaste_varde(
 
 Det går även att hämta senaste värdet för samtliga kommuner:
 
-``` r
+```r
 senaste_varde(
   nyckeltal = "N01926",
   kommuntyp = "K"
 )
 ```
 
-Det senaste året bestäms separat för varje kombination av nyckeltal,
-område och kön.
+Det senaste året bestäms separat för varje kombination av nyckeltal, område och kön.
 
-Som standard används den senaste observationen där ett faktiskt värde
-finns. Om den senaste observationen är bortfall, sekretess eller av
-annan anledning saknar värde används istället det senaste året där ett
-värde finns.
+Som standard används den senaste observationen där ett faktiskt värde finns. Om den senaste observationen är bortfall, sekretess eller av annan anledning saknar värde används istället det senaste året där ett värde finns.
 
-Om även observationer med bortfall eller sekretess ska accepteras kan
-`bortfall = TRUE` anges:
+Om även observationer med bortfall eller sekretess ska accepteras kan `bortfall = TRUE` anges:
 
-``` r
+```r
 senaste_varde(
   nyckeltal = "N01926",
   kommun = "Haninge",
@@ -440,25 +408,21 @@ senaste_varde(
 )
 ```
 
-Med `bortfall = TRUE` returneras den senaste observationen även om
-`value` saknas. Information om exempelvis bortfall eller sekretess finns
-då kvar i kolumnen `status`.
+Med `bortfall = TRUE` returneras den senaste observationen även om `value` saknas. Information om exempelvis bortfall eller sekretess finns då kvar i kolumnen `status`.
 
 Mer information:
 
-``` r
+```r
 ?senaste_varde
 ```
 
 ### Beräkna förändring mellan två år
 
-Med `forandring()` kan förändringen för ett eller flera nyckeltal mellan
-två år beräknas. Funktionen hämtar värdena för de två valda åren och
-beräknar både absolut och procentuell förändring.
+Med `forandring()` kan förändringen för ett eller flera nyckeltal mellan två år beräknas. Funktionen hämtar värdena för de två valda åren och beräknar både absolut och procentuell förändring.
 
 Exempel för en kommun:
 
-``` r
+```r
 forandring(
   nyckeltal = "N01926",
   kommun = "Haninge",
@@ -470,16 +434,16 @@ forandring(
 
 Resultatet innehåller bland annat:
 
--   värdet för startåret
--   värdet för slutåret
--   absolut förändring
--   procentuell förändring
+- värdet för startåret
+- värdet för slutåret
+- absolut förändring
+- procentuell förändring
 
 Funktionen kan även användas för flera kommuner och nyckeltal.
 
 Exempel för flera kommuner:
 
-``` r
+```r
 forandring(
   nyckeltal = "N01926",
   kommun = c("Haninge", "Huddinge", "0180"),
@@ -491,7 +455,7 @@ forandring(
 
 Det går också att beräkna förändringen för samtliga kommuner:
 
-``` r
+```r
 forandring(
   nyckeltal = "N01926",
   kommuntyp = "K",
@@ -501,32 +465,29 @@ forandring(
 )
 ```
 
-Om ett värde saknas för något av jämförelseåren kan förändringen inte
-beräknas för den observationen. Procentuell förändring beräknas inte
-heller när startvärdet är 0.
+Om ett värde saknas för något av jämförelseåren kan förändringen inte beräknas för den observationen. Procentuell förändring beräknas inte heller när startvärdet är 0.
 
 Mer information:
 
-``` r
+```r
 ?forandring
 ```
 
 ### Jämför en kommun med andra kommuner
 
-Med `hamta_jamforelse()` kan en vald kommun jämföras med andra kommuner
-utifrån olika jämförelsegrupper i Kolada.
+Med `hamta_jamforelse()` kan en vald kommun jämföras med andra kommuner utifrån olika jämförelsegrupper i Kolada.
 
 Det går att välja mellan:
 
--   kommuner i samma län
--   SKR:s kommungruppsindelning
--   liknande kommuner inom olika verksamhetsområden
+- kommuner i samma län
+- SKR:s kommungruppsindelning
+- liknande kommuner inom olika verksamhetsområden
 
 Som standard används kommunerna i samma län.
 
 ### Jämför med kommunerna i samma län
 
-``` r
+```r
 hamta_jamforelse(
   nyckeltal = "N01926",
   kommun = "Ludvika",
@@ -536,16 +497,15 @@ hamta_jamforelse(
 )
 ```
 
-Funktionen identifierar automatiskt vilket län kommunen tillhör och
-hämtar:
+Funktionen identifierar automatiskt vilket län kommunen tillhör och hämtar:
 
--   den valda kommunen
--   övriga kommuner i samma län
--   länets kommungrupp (ovägt medel)
+- den valda kommunen
+- övriga kommuner i samma län
+- länets kommungrupp (ovägt medel)
 
 Eftersom `"lan"` är standard kan samma anrop även skrivas:
 
-``` r
+```r
 hamta_jamforelse(
   nyckeltal = "N01926",
   kommun = "Ludvika",
@@ -556,10 +516,9 @@ hamta_jamforelse(
 
 ### Jämför med SKR:s kommungrupp
 
-Med `jamforelse = "kommungrupp"` jämförs kommunen istället med
-kommunerna i samma kommungrupp enligt SKR:s kommungruppsindelning.
+Med `jamforelse = "kommungrupp"` jämförs kommunen istället med kommunerna i samma kommungrupp enligt SKR:s kommungruppsindelning.
 
-``` r
+```r
 hamta_jamforelse(
   nyckeltal = "N01926",
   kommun = "Ludvika",
@@ -569,16 +528,13 @@ hamta_jamforelse(
 )
 ```
 
-Funktionen identifierar automatiskt vilken kommungrupp den valda
-kommunen tillhör och hämtar den valda kommunen, övriga kommuner i
-kommungruppen samt gruppvärdet.
+Funktionen identifierar automatiskt vilken kommungrupp den valda kommunen tillhör och hämtar den valda kommunen, övriga kommuner i kommungruppen samt gruppvärdet.
 
 ### Jämför med liknande kommuner
 
-Med `jamforelse = "liknande"` kan kommunen jämföras med liknande
-kommuner inom olika verksamhetsområden.
+Med `jamforelse = "liknande"` kan kommunen jämföras med liknande kommuner inom olika verksamhetsområden.
 
-``` r
+```r
 hamta_jamforelse(
   nyckeltal = "N01926",
   kommun = "Ludvika",
@@ -588,10 +544,9 @@ hamta_jamforelse(
 )
 ```
 
-När funktionen körs visas de tillgängliga grupperna för den valda
-kommunen i Console, exempelvis:
+När funktionen körs visas de tillgängliga grupperna för den valda kommunen i Console, exempelvis:
 
-``` text
+```text
 Välj grupp för liknande kommuner för Ludvika:
 
 1: arbetsmarknad (2024)
@@ -610,16 +565,13 @@ Välj grupp för liknande kommuner för Ludvika:
 Selection:
 ```
 
-Ange numret för den jämförelsegrupp som ska användas. Om exempelvis `4`
-anges används gruppen för liknande kommuner inom förskola.
+Ange numret för den jämförelsegrupp som ska användas. Om exempelvis `4` anges används gruppen för liknande kommuner inom förskola.
 
-De grupper som visas hämtas från Kolada och kan därför skilja sig mellan
-kommuner och förändras när gruppindelningarna uppdateras.
+De grupper som visas hämtas från Kolada och kan därför skilja sig mellan kommuner och förändras när gruppindelningarna uppdateras.
 
-Det går också att ange verksamheten direkt och därmed hoppa över valet i
-Console:
+Det går också att ange verksamheten direkt och därmed hoppa över valet i Console:
 
-``` r
+```r
 hamta_jamforelse(
   nyckeltal = "N01926",
   kommun = "Ludvika",
@@ -630,23 +582,21 @@ hamta_jamforelse(
 )
 ```
 
-Detta är särskilt användbart när funktionen används i ett script eller
-annat automatiserat arbetsflöde.
+Detta är särskilt användbart när funktionen används i ett script eller annat automatiserat arbetsflöde.
 
 ### Inkludera eller exkludera gruppvärdet
 
 Som standard är:
 
-``` r
+```r
 inkludera_grupp = TRUE
 ```
 
-vilket innebär att jämförelsegruppens gruppvärde inkluderas tillsammans
-med de enskilda kommunerna.
+vilket innebär att jämförelsegruppens gruppvärde inkluderas tillsammans med de enskilda kommunerna.
 
 Om endast kommunernas egna värden ska hämtas används:
 
-``` r
+```r
 hamta_jamforelse(
   nyckeltal = "N01926",
   kommun = "Ludvika",
@@ -658,19 +608,15 @@ hamta_jamforelse(
 
 ### Resultatet
 
-Resultatet innehåller bland annat kolumnerna `jamforelsetyp` och
-`jamforelsegrupp`.
+Resultatet innehåller bland annat kolumnerna `jamforelsetyp` och `jamforelsegrupp`.
 
-`jamforelsetyp` visar om observationen avser den valda kommunen, en
-annan kommun i jämförelsegruppen eller gruppvärdet.
+`jamforelsetyp` visar om observationen avser den valda kommunen, en annan kommun i jämförelsegruppen eller gruppvärdet.
 
-`jamforelsegrupp` visar vilken grupp i Kolada som har använts för
-jämförelsen.
+`jamforelsegrupp` visar vilken grupp i Kolada som har använts för jämförelsen.
 
-Flera år och flera nyckeltal kan anges på samma sätt som i
-`hamta_fran_kolada()`:
+Flera år och flera nyckeltal kan anges på samma sätt som i `hamta_fran_kolada()`:
 
-``` r
+```r
 hamta_jamforelse(
   nyckeltal = c("N01926", "N17454"),
   kommun = "Ludvika",
@@ -680,21 +626,19 @@ hamta_jamforelse(
 )
 ```
 
-Observera att gruppvärden avser Koladas jämförelsegrupper och inte
-regionorganisationens eget värde.
+Observera att gruppvärden avser Koladas jämförelsegrupper och inte regionorganisationens eget värde.
 
 Mer information:
 
-``` r
+```r
 ?hamta_jamforelse
 ```
 
 ## Exempel på arbetsflöde
 
-Ett vanligt arbetsflöde kan vara att först söka efter ett nyckeltal,
-läsa dess metadata och därefter hämta data.
+Ett vanligt arbetsflöde kan vara att först söka efter ett nyckeltal, läsa dess metadata och därefter hämta data.
 
-``` r
+```r
 # 1. Sök efter ett nyckeltal
 sok_nyckeltal("förskola")
 
@@ -717,7 +661,7 @@ data <- hamta_fran_kolada(
 
 Alternativt kan det senaste publicerade värdet hämtas direkt:
 
-``` r
+```r
 data <- senaste_varde(
   nyckeltal = "N01926",
   kommun = "Haninge"
@@ -726,38 +670,22 @@ data <- senaste_varde(
 
 ## Funktioner i paketet
 
-  -----------------------------------------------------------------------
-  Funktion                            Beskrivning
-  ----------------------------------- -----------------------------------
-  `hamta_fran_kolada()`               Hämtar data från Kolada för valda
-                                      nyckeltal, områden och år.
+Alla huvudfunktioner finns med både svenska och engelska funktionsnamn.
 
-  `sok_nyckeltal()`                   Söker efter nyckeltal utifrån ord,
-                                      namn, beskrivning eller ID.
-
-  `info_nyckeltal()`                  Hämtar metadata för ett eller flera
-                                      nyckeltal.
-
-  `hamta_kommuner()`                  Hämtar och söker bland kommuner och
-                                      regioner.
-
-  `tillgangliga_ar()`                 Visar vilka år som har tillgängliga
-                                      data för ett nyckeltal.
-
-  `senaste_varde()`                   Hämtar den senaste tillgängliga
-                                      observationen.
-
-  `forandring()`                      Beräknar absolut och procentuell
-                                      förändring mellan två år.
-
-  `hamta_jamforelse()`                Jämför en kommun med kommuner i
-                                      samma län, SKR-kommungrupp eller
-                                      grupper av liknande kommuner.
-  -----------------------------------------------------------------------
+| Svenska | English | Beskrivning |
+|---|---|---|
+| `hamta_fran_kolada()` | `get_from_kolada()` | Hämtar data från Kolada för valda nyckeltal, områden och år. |
+| `sok_nyckeltal()` | `search_kpi()` | Söker efter nyckeltal utifrån ord, namn, beskrivning eller ID. |
+| `info_nyckeltal()` | `kpi_info()` | Hämtar metadata för ett eller flera nyckeltal. |
+| `hamta_kommuner()` | `get_municipalities()` | Hämtar och söker bland kommuner och regioner. |
+| `tillgangliga_ar()` | `available_years()` | Visar vilka år som har tillgängliga data för ett nyckeltal. |
+| `senaste_varde()` | `latest_value()` | Hämtar den senaste tillgängliga observationen. |
+| `forandring()` | `change()` | Beräknar absolut och procentuell förändring mellan två år. |
+| `hamta_jamforelse()` | `get_comparison()` | Jämför en kommun med kommuner i samma län, SKR-kommungrupp eller grupper av liknande kommuner. |
 
 Dokumentation för de svenska funktionerna finns även direkt i R:
 
-``` r
+```r
 # Svenska
 ?hamta_fran_kolada
 ?sok_nyckeltal
@@ -769,44 +697,38 @@ Dokumentation för de svenska funktionerna finns även direkt i R:
 ?hamta_jamforelse
 ```
 
-------------------------------------------------------------------------
-
 ## English users
 
 `koladafun` can be used with both Swedish and English function names.
 
-The English functions provide the same functionality as the Swedish
-functions, but use English function names and argument names.
+The English functions provide the same functionality as the Swedish functions, but use English function names and argument names.
 
-  Swedish function        English function
-  ----------------------- ------------------------
-  `hamta_fran_kolada()`   `get_from_kolada()`
-  `sok_nyckeltal()`       `search_kpi()`
-  `info_nyckeltal()`      `kpi_info()`
-  `hamta_kommuner()`      `get_municipalities()`
-  `tillgangliga_ar()`     `available_years()`
-  `senaste_varde()`       `latest_value()`
-  `forandring()`          `change()`
-  `hamta_jamforelse()`    `get_comparison()`
-
-The Swedish and English functions use the same underlying functionality.
+| Swedish function | English function |
+|---|---|
+| `hamta_fran_kolada()` | `get_from_kolada()` |
+| `sok_nyckeltal()` | `search_kpi()` |
+| `info_nyckeltal()` | `kpi_info()` |
+| `hamta_kommuner()` | `get_municipalities()` |
+| `tillgangliga_ar()` | `available_years()` |
+| `senaste_varde()` | `latest_value()` |
+| `forandring()` | `change()` |
+| `hamta_jamforelse()` | `get_comparison()` |
 
 ### Get data from Kolada
 
 The only required argument is `kpi`.
 
-``` r
+```r
 data <- get_from_kolada(
   kpi = "N01926"
 )
 ```
 
-If no municipality or year is specified, data for all available areas
-and years are returned.
+If no municipality or year is specified, data for all available areas and years are returned.
 
 A municipality can be specified by name or code:
 
-``` r
+```r
 data <- get_from_kolada(
   kpi = "N01926",
   municipality = "Haninge",
@@ -816,7 +738,7 @@ data <- get_from_kolada(
 
 Multiple municipalities, years and KPIs can also be requested:
 
-``` r
+```r
 data <- get_from_kolada(
   kpi = c("N01926", "N17454"),
   municipality = c("Haninge", "0180", "Mjölby"),
@@ -827,20 +749,19 @@ data <- get_from_kolada(
 
 `gender` can be:
 
--   `"T"` = total
--   `"K"` = women
--   `"M"` = men
--   `c("K", "M")` = women and men
+- `"T"` = total
+- `"K"` = women
+- `"M"` = men
+- `c("K", "M")` = women and men
 
-The `municipality_type` argument can be used to limit the request to
-municipalities or regions:
+The `municipality_type` argument can be used to limit the request to municipalities or regions:
 
--   `"K"` = municipality
--   `"R"` = region
+- `"K"` = municipality
+- `"R"` = region
 
 More information:
 
-``` r
+```r
 ?get_from_kolada
 ```
 
@@ -848,13 +769,13 @@ More information:
 
 Use `search_kpi()` to search for KPIs in Kolada:
 
-``` r
+```r
 search_kpi("preschool")
 ```
 
 The maximum number of results can be specified with `max_results`:
 
-``` r
+```r
 search_kpi(
   "preschool",
   max_results = 20
@@ -863,7 +784,7 @@ search_kpi(
 
 More information:
 
-``` r
+```r
 ?search_kpi
 ```
 
@@ -871,13 +792,13 @@ More information:
 
 Use `kpi_info()` to retrieve metadata for one or more KPIs:
 
-``` r
+```r
 kpi_info("N01926")
 ```
 
 Multiple KPIs can be specified:
 
-``` r
+```r
 kpi_info(
   c("N01926", "N17454")
 )
@@ -885,7 +806,7 @@ kpi_info(
 
 More information:
 
-``` r
+```r
 ?kpi_info
 ```
 
@@ -893,13 +814,13 @@ More information:
 
 Use `get_municipalities()` to retrieve municipalities and regions:
 
-``` r
+```r
 get_municipalities()
 ```
 
 Only municipalities:
 
-``` r
+```r
 get_municipalities(
   type = "K"
 )
@@ -907,7 +828,7 @@ get_municipalities(
 
 Only regions:
 
-``` r
+```r
 get_municipalities(
   type = "R"
 )
@@ -915,7 +836,7 @@ get_municipalities(
 
 It is also possible to search by name or code:
 
-``` r
+```r
 get_municipalities(
   search = "Han"
 )
@@ -923,7 +844,7 @@ get_municipalities(
 
 More information:
 
-``` r
+```r
 ?get_municipalities
 ```
 
@@ -931,7 +852,7 @@ More information:
 
 Use `available_years()` to check which years contain data for a KPI:
 
-``` r
+```r
 available_years(
   kpi = "N01926"
 )
@@ -939,7 +860,7 @@ available_years(
 
 The search can be limited to a municipality or region:
 
-``` r
+```r
 available_years(
   kpi = "N01926",
   municipality = "Haninge"
@@ -948,29 +869,26 @@ available_years(
 
 More information:
 
-``` r
+```r
 ?available_years
 ```
 
 ### Get the latest available value
 
-Use `latest_value()` to retrieve the latest available value without
-having to know the latest published year:
+Use `latest_value()` to retrieve the latest available value without having to know the latest published year:
 
-``` r
+```r
 latest_value(
   kpi = "N01926",
   municipality = "Haninge"
 )
 ```
 
-By default, the latest observation containing an actual value is
-returned.
+By default, the latest observation containing an actual value is returned.
 
-If observations with missing values, for example due to missing data or
-confidentiality, should also be accepted, use:
+If observations with missing values, for example due to missing data or confidentiality, should also be accepted, use:
 
-``` r
+```r
 latest_value(
   kpi = "N01926",
   municipality = "Haninge",
@@ -978,21 +896,19 @@ latest_value(
 )
 ```
 
-The latest year is determined separately for each combination of KPI,
-area and gender.
+The latest year is determined separately for each combination of KPI, area and gender.
 
 More information:
 
-``` r
+```r
 ?latest_value
 ```
 
 ### Calculate change between two years
 
-Use `change()` to calculate absolute and percentage change between two
-years:
+Use `change()` to calculate absolute and percentage change between two years:
 
-``` r
+```r
 change(
   kpi = "N01926",
   municipality = "Haninge",
@@ -1004,38 +920,34 @@ change(
 
 The result contains:
 
--   `start_value`
--   `end_value`
--   `change`
--   `percentage_change`
+- `start_value`
+- `end_value`
+- `change`
+- `percentage_change`
 
-If a value is missing for either comparison year, the change cannot be
-calculated. Percentage change is not calculated when the start value is
-0.
+If a value is missing for either comparison year, the change cannot be calculated. Percentage change is not calculated when the start value is 0.
 
 More information:
 
-``` r
+```r
 ?change
 ```
 
 ### Compare a municipality with other municipalities
 
-Use `get_comparison()` to compare a municipality with different
-comparison groups in Kolada.
+Use `get_comparison()` to compare a municipality with different comparison groups in Kolada.
 
 Three types of comparisons are available:
 
--   `"county"` = municipalities in the same county
--   `"municipality_group"` = municipalities in the same SKR municipality
-    group
--   `"similar"` = similar municipalities
+- `"county"` = municipalities in the same county
+- `"municipality_group"` = municipalities in the same SKR municipality group
+- `"similar"` = similar municipalities
 
 The default is `"county"`.
 
 #### Compare with municipalities in the same county
 
-``` r
+```r
 get_comparison(
   kpi = "N01926",
   municipality = "Ludvika",
@@ -1045,12 +957,9 @@ get_comparison(
 )
 ```
 
-The result contains the selected municipality, the other municipalities
-in the county and, by default, the group value.
-
 #### Compare with an SKR municipality group
 
-``` r
+```r
 get_comparison(
   kpi = "N01926",
   municipality = "Ludvika",
@@ -1060,12 +969,9 @@ get_comparison(
 )
 ```
 
-The function automatically identifies the SKR municipality group to
-which the selected municipality belongs.
-
 #### Compare with similar municipalities
 
-``` r
+```r
 get_comparison(
   kpi = "N01926",
   municipality = "Ludvika",
@@ -1075,34 +981,11 @@ get_comparison(
 )
 ```
 
-An interactive menu is displayed with the available comparison groups
-for the selected municipality.
+When `comparison = "similar"` and `area` is not specified, an interactive menu is shown with the available comparison groups for the selected municipality.
 
-For example:
+A service area can also be specified directly:
 
-``` text
-Select a group of similar municipalities for Ludvika:
-
-1: labour market (2024)
-2: economic assistance (2023)
-3: leisure-time centre (2024)
-4: preschool (2024)
-5: compulsory school (2024)
-6: upper secondary school (2024)
-7: IFO (2024)
-8: LSS (2024)
-9: rescue service (2024)
-10: socioeconomic (2024)
-11: elderly care (2024)
-12: overall (2025)
-
-Selection:
-```
-
-A service area can also be specified directly, which avoids the
-interactive menu:
-
-``` r
+```r
 get_comparison(
   kpi = "N01926",
   municipality = "Ludvika",
@@ -1115,80 +998,47 @@ get_comparison(
 
 Common values for `area` include:
 
-  `area`                           Comparison group
-  -------------------------------- ----------------------------------
-  `"labour_market"`                Labour market
-  `"economic_assistance"`          Economic assistance
-  `"leisure_time_centre"`          Leisure-time centre
-  `"preschool"`                    Preschool
-  `"compulsory_school"`            Compulsory school
-  `"upper_secondary_school"`       Upper secondary school
-  `"individual_and_family_care"`   Individual and family care (IFO)
-  `"lss"`                          LSS
-  `"rescue_service"`               Rescue service
-  `"socioeconomic"`                Socioeconomic
-  `"elderly_care"`                 Elderly care
-  `"overall"`                      Overall
+| `area` | Comparison group |
+|---|---|
+| `"labour_market"` | Labour market |
+| `"economic_assistance"` | Economic assistance |
+| `"leisure_time_centre"` | Leisure-time centre |
+| `"preschool"` | Preschool |
+| `"compulsory_school"` | Compulsory school |
+| `"upper_secondary_school"` | Upper secondary school |
+| `"individual_and_family_care"` | Individual and family care (IFO) |
+| `"lss"` | LSS |
+| `"rescue_service"` | Rescue service |
+| `"socioeconomic"` | Socioeconomic |
+| `"elderly_care"` | Elderly care |
+| `"overall"` | Overall |
 
-By default:
+By default, `include_group = TRUE`. Set `include_group = FALSE` to return only the individual municipalities.
 
-``` r
-include_group = TRUE
-```
-
-Set `include_group = FALSE` to return only the individual
-municipalities.
-
-The result includes the columns `comparison_type` and
-`comparison_group`.
-
-`comparison_type` indicates whether the observation represents the
-selected municipality, another municipality in the comparison group, or
-the group value.
-
-`comparison_group` identifies the Kolada comparison group used.
+The result includes `comparison_type` and `comparison_group`.
 
 More information:
 
-``` r
+```r
 ?get_comparison
 ```
 
 ## Functions
 
-  -----------------------------------------------------------------------
-  Function                            Description
-  ----------------------------------- -----------------------------------
-  `get_from_kolada()`                 Retrieves data from Kolada for
-                                      selected KPIs, areas and years.
+| Function | Description |
+|---|---|
+| `get_from_kolada()` | Retrieves data from Kolada for selected KPIs, areas and years. |
+| `search_kpi()` | Searches for KPIs by keyword, name, description or ID. |
+| `kpi_info()` | Retrieves metadata for one or more KPIs. |
+| `get_municipalities()` | Retrieves and searches municipalities and regions. |
+| `available_years()` | Shows which years have available data for a KPI. |
+| `latest_value()` | Retrieves the latest available observation. |
+| `change()` | Calculates absolute and percentage change between two years. |
+| `get_comparison()` | Compares a municipality with municipalities in the same county, SKR municipality group or groups of similar municipalities. |
 
-  `search_kpi()`                      Searches for KPIs by keyword, name,
-                                      description or ID.
+Documentation for the English functions is also available directly in R:
 
-  `kpi_info()`                        Retrieves metadata for one or more
-                                      KPIs.
-
-  `get_municipalities()`              Retrieves and searches
-                                      municipalities and regions.
-
-  `available_years()`                 Shows which years have available
-                                      data for a KPI.
-
-  `latest_value()`                    Retrieves the latest available
-                                      observation.
-
-  `change()`                          Calculates absolute and percentage
-                                      change between two years.
-
-  `get_comparison()`                  Compares a municipality with
-                                      municipalities in the same county,
-                                      SKR municipality group or groups of
-                                      similar municipalities.
-  -----------------------------------------------------------------------
-
-Documentation for all English functions is also available directly in R:
-
-``` r
+```r
 # English
 ?get_from_kolada
 ?search_kpi
@@ -1199,3 +1049,4 @@ Documentation for all English functions is also available directly in R:
 ?change
 ?get_comparison
 ```
+
