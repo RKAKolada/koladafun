@@ -640,20 +640,20 @@ Ett vanligt arbetsflöde kan vara att först söka efter ett nyckeltal, läsa de
 
 ```r
 # 1. Sök efter ett nyckeltal
-sok_nyckeltal("förskola")
+sok_nyckeltal("kostnad förskola")
 
 # 2. Läs mer om nyckeltalet
-info_nyckeltal("N01926")
+info_nyckeltal("N11005")
 
 # 3. Kontrollera vilka år som finns
 tillgangliga_ar(
-  "N01926",
+  "N11005",
   kommun = "Haninge"
 )
 
 # 4. Hämta data
 data <- hamta_fran_kolada(
-  nyckeltal = "N01926",
+  nyckeltal = "N11005",
   kommun = "Haninge",
   ar = 2020:2025
 )
