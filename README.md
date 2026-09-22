@@ -663,7 +663,7 @@ Alternativt kan det senaste publicerade värdet hämtas direkt:
 
 ```r
 data <- senaste_varde(
-  nyckeltal = "N01926",
+  nyckeltal = "N11005",
   kommun = "Haninge"
 )
 ```
