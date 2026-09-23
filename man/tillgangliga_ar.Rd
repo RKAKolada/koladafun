@@ -12,8 +12,11 @@ tillgangliga_ar(nyckeltal, kommun = NULL, kommuntyp = NULL)
 \item{kommun}{Valfri kommun eller region, angiven som
 namn eller kod.}
 
-\item{kommuntyp}{Valfri områdestyp.
-\code{"K"} = kommun och \code{"R"} = region.}
+\item{kommuntyp}{Valfritt filter för områdestyp.
+\code{"K"} = kommun och \code{"R"} eller \code{"L"} = region.
+Koladas API använder \code{"L"} för region, men både \code{"R"} och \code{"L"}
+accepteras av funktionen.
+Flera kan anges med exempelvis \code{c("K", "R")}.}
 }
 \value{
 En data.frame med nyckeltals-ID och tillgängliga år.

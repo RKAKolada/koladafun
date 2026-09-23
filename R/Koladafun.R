@@ -100,25 +100,27 @@ hamta_fran_kolada <- function(
 
     ogiltiga_typer <- setdiff(
       kommuntyp,
-      c("K", "R")
+      c("K", "R", "L")
     )
 
     if (length(ogiltiga_typer) > 0) {
       stop(
         "Ogiltig kommuntyp: ",
         paste(ogiltiga_typer, collapse = ", "),
-        ". Använd K för kommun eller R för region."
+        ". Använd K för kommun eller R/L för region."
       )
     }
 
+    # Koladas API använder L för region.
+    # Både R och L accepteras därför som region av användaren.
     api_typ <- ifelse(
-      kommuntyp == "R",
+      kommuntyp %in% c("R", "L"),
       "L",
       kommuntyp
     )
 
     kommuner <- kommuner[
-      kommuner$type %in% api_typ,
+      kommuner$type %in% unique(api_typ),
       ,
       drop = FALSE
     ]
@@ -764,8 +766,9 @@ hamta_kommuner <- function(
 
     ogiltiga <- setdiff(
       typ,
-      c("K", "R")
+      c("K", "R", "L")
     )
+
 
     if (length(ogiltiga) > 0) {
       stop(
@@ -777,6 +780,9 @@ hamta_kommuner <- function(
         ". Använd K eller R."
       )
     }
+
+    # Både R och L betyder region
+    typ[typ == "L"] <- "R"
 
     kommuner <- kommuner[
       kommuner$type %in% typ,
@@ -833,8 +839,11 @@ hamta_kommuner <- function(
 #' @param nyckeltal Ett eller flera nyckeltals-ID.
 #' @param kommun Valfri kommun eller region, angiven som
 #'   namn eller kod.
-#' @param kommuntyp Valfri områdestyp.
-#'   `"K"` = kommun och `"R"` = region.
+#' @param kommuntyp Valfritt filter för områdestyp.
+#'   `"K"` = kommun och `"R"` eller `"L"` = region.
+#'   Koladas API använder `"L"` för region, men både `"R"` och `"L"`
+#'   accepteras av funktionen.
+#'   Flera kan anges med exempelvis `c("K", "R")`.
 #'
 #' @return En data.frame med nyckeltals-ID och tillgängliga år.
 #'
@@ -1986,7 +1995,8 @@ hamta_jamforelse <- function(
 #' @param gender Optional gender filter:
 #'   `"T"` = total, `"K"` = women, `"M"` = men.
 #' @param municipality_type Optional area type:
-#'   `"K"` = municipality, `"R"` = region.
+#'   `"K"` = municipality, `"R"` or `"L"` = region.
+#'   Kolada's API uses `"L"` for regions, but both values are accepted.
 #' @param per_page Number of observations per API page.
 #' @param batch_size Number of municipalities/regions per API request.
 #'

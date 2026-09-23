@@ -25,7 +25,8 @@ get_from_kolada(
 \code{"T"} = total, \code{"K"} = women, \code{"M"} = men.}
 
 \item{municipality_type}{Optional area type:
-\code{"K"} = municipality, \code{"R"} = region.}
+\code{"K"} = municipality, \code{"R"} or \code{"L"} = region.
+Kolada's API uses \code{"L"} for regions, but both values are accepted.}
 
 \item{per_page}{Number of observations per API page.}
 
