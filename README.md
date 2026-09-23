@@ -154,11 +154,20 @@ data <- hamta_fran_kolada(
   ar = 2025
 )
 ```
+```r
+data <- hamta_fran_kolada(
+  nyckeltal = "N01926",
+  kommuntyp = "L",
+  ar = 2025
+)
+```
 
 `kommuntyp` kan anges som:
 
 - `"K"` = kommun
-- `"R"` = region
+- `"R"` eller `"L"` = region
+
+Koladas API använder `"L"` för region, men både `"R"` och `"L"` kan användas i `koladafun`.
 
 ### Kombinera flera val
 
@@ -183,7 +192,7 @@ De viktigaste argumenten i `hamta_fran_kolada()` är:
 | `kommun` | Kommun-/regionnamn eller kod. Om det utelämnas hämtas alla områden. |
 | `ar` | Ett eller flera år. Om det utelämnas hämtas alla tillgängliga år. |
 | `kon` | `"T"`, `"K"` eller `"M"`. Kan även anges som en kombination. |
-| `kommuntyp` | `"K"` för kommun eller `"R"` för region. |
+| `kommuntyp` | `"K"` för kommun eller `"R"`/`"L"` för region. |
 
 Mer information om funktionen finns även i R:
 
@@ -302,7 +311,7 @@ hamta_kommuner(
 `typ` kan anges som:
 
 - `"K"` = kommun
-- `"R"` = region
+- `"R"` eller `"L"` = region
 
 Mer information:
 
@@ -757,7 +766,9 @@ data <- get_from_kolada(
 The `municipality_type` argument can be used to limit the request to municipalities or regions:
 
 - `"K"` = municipality
-- `"R"` = region
+- `"R"` or `"L"` = region
+
+Kolada's API uses `"L"` for regions, but both `"R"` and `"L"` are accepted by `koladafun`.
 
 More information:
 
@@ -833,6 +844,8 @@ get_municipalities(
   type = "R"
 )
 ```
+
+Both `"R"` and `"L"` can be used to select regions.
 
 It is also possible to search by name or code:
 
