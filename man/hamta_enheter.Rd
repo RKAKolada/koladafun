@@ -15,8 +15,7 @@ hamta_enheter(
 )
 }
 \arguments{
-\item{verksamhet}{Verksamhet eller V-kod, exempelvis
-\code{"Förskola"} eller \code{"V11"}.}
+\item{verksamhet}{Verksamhet eller V-kod, exempelvis \code{"Förskola"} eller \code{"V11"}.}
 
 \item{kommun}{Valfri kommun angiven med namn eller kod.}
 
@@ -37,4 +36,53 @@ nyckeltalsvärden på enhetsnivå.
 \description{
 Hämtar organisatoriska enheter och, valfritt,
 nyckeltalsdata på enhetsnivå.
+}
+\details{
+Följande verksamheter kan anges med namn eller V-kod:
+
+\tabular{ll}{
+\strong{Verksamhet} \tab \strong{V-kod} \cr
+Förskola \tab V11 \cr
+Grundskola F-9 \tab V15 \cr
+Gymnasieskola \tab V17 \cr
+Hemtjänst, äldre \tab V21 \cr
+Särskilt boende, äldre \tab V23 \cr
+LSS boende med särskild service \tab V25 \cr
+LSS daglig verksamhet \tab V26 \cr
+Gruppbostad LSS \tab V29 \cr
+Servicebostad LSS \tab V30 \cr
+SoL boendestöd \tab V31 \cr
+SoL boende med särskild service \tab V32 \cr
+SoL sysselsättning \tab V34 \cr
+Våld i nära relationer \tab V45 \cr
+Fastigheter \tab V60
+}
+
+Verksamhet kan anges antingen med namn, exempelvis
+\code{verksamhet = "Förskola"}, eller direkt med V-kod,
+exempelvis \code{verksamhet = "V11"}.
+}
+\examples{
+\dontrun{
+# Hämta alla förskolor i Haninge
+hamta_enheter(
+  verksamhet = "Förskola",
+  kommun = "Haninge"
+)
+
+# Samma sak med V-kod och kommunkod
+hamta_enheter(
+  verksamhet = "V11",
+  kommun = "0136"
+)
+
+# Hämta även nyckeltalsvärden
+hamta_enheter(
+  verksamhet = "V11",
+  kommun = "0136",
+  nyckeltal = "N11808",
+  ar = 2025
+)
+}
+
 }

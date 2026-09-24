@@ -2148,8 +2148,7 @@ hamta_jamforelse <- function(
 #' Hämtar organisatoriska enheter och, valfritt,
 #' nyckeltalsdata på enhetsnivå.
 #'
-#' @param verksamhet Verksamhet eller V-kod, exempelvis
-#'   `"Förskola"` eller `"V11"`.
+#' @param verksamhet Verksamhet eller V-kod, exempelvis `"Förskola"` eller `"V11"`.
 #' @param kommun Valfri kommun angiven med namn eller kod.
 #' @param nyckeltal Valfritt nyckeltals-ID.
 #' @param ar Valfritt år eller flera år.
@@ -2157,8 +2156,56 @@ hamta_jamforelse <- function(
 #' @param sok Valfri söktext för enhetsnamn.
 #' @param batch_size Antal enheter per API-anrop. Standard är 25.
 #'
+#' @details
+#' Följande verksamheter kan anges med namn eller V-kod:
+#'
+#' \tabular{ll}{
+#' \strong{Verksamhet} \tab \strong{V-kod} \cr
+#' Förskola \tab V11 \cr
+#' Grundskola F-9 \tab V15 \cr
+#' Gymnasieskola \tab V17 \cr
+#' Hemtjänst, äldre \tab V21 \cr
+#' Särskilt boende, äldre \tab V23 \cr
+#' LSS boende med särskild service \tab V25 \cr
+#' LSS daglig verksamhet \tab V26 \cr
+#' Gruppbostad LSS \tab V29 \cr
+#' Servicebostad LSS \tab V30 \cr
+#' SoL boendestöd \tab V31 \cr
+#' SoL boende med särskild service \tab V32 \cr
+#' SoL sysselsättning \tab V34 \cr
+#' Våld i nära relationer \tab V45 \cr
+#' Fastigheter \tab V60
+#' }
+#'
+#' Verksamhet kan anges antingen med namn, exempelvis
+#' `verksamhet = "Förskola"`, eller direkt med V-kod,
+#' exempelvis `verksamhet = "V11"`.
+#'
 #' @return En data.frame med enheter och, om nyckeltal anges,
-#'   nyckeltalsvärden på enhetsnivå.
+#' nyckeltalsvärden på enhetsnivå.
+#'
+#' @examples
+#' \dontrun{
+#' # Hämta alla förskolor i Haninge
+#' hamta_enheter(
+#'   verksamhet = "Förskola",
+#'   kommun = "Haninge"
+#' )
+#'
+#' # Samma sak med V-kod och kommunkod
+#' hamta_enheter(
+#'   verksamhet = "V11",
+#'   kommun = "0136"
+#' )
+#'
+#' # Hämta även nyckeltalsvärden
+#' hamta_enheter(
+#'   verksamhet = "V11",
+#'   kommun = "0136",
+#'   nyckeltal = "N11808",
+#'   ar = 2025
+#' )
+#' }
 #'
 #' @export
 hamta_enheter <- function(
