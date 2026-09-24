@@ -641,6 +641,117 @@ Mer information:
 
 ```r
 ?hamta_jamforelse
+?hamta_enheter
+```
+
+
+### Hämta enheter och enhetsdata
+
+Med `hamta_enheter()` kan organisatoriska enheter i Kolada hämtas, exempelvis förskolor, grundskolor, gymnasieskolor och olika verksamheter inom äldreomsorg och LSS.
+
+Verksamhet kan anges med namn:
+
+```r
+hamta_enheter(
+  verksamhet = "Förskola"
+)
+```
+
+eller direkt med Koladas enhetskod:
+
+```r
+hamta_enheter(
+  verksamhet = "V11"
+)
+```
+
+Vanliga verksamhetskoder är:
+
+| Kod | Verksamhet |
+|---|---|
+| `V11` | Förskola |
+| `V15` | Grundskola F-9 |
+| `V17` | Gymnasieskola |
+| `V21` | Hemtjänst, äldre |
+| `V23` | Särskilt boende, äldre |
+| `V25` | LSS boende med särskild service |
+| `V26` | LSS daglig verksamhet |
+| `V29` | Gruppbostad LSS |
+| `V30` | Servicebostad LSS |
+| `V31` | SoL boendestöd |
+| `V32` | SoL boende med särskild service |
+| `V34` | SoL sysselsättning |
+| `V45` | Våld i nära relationer |
+| `V60` | Fastigheter |
+
+Det går också att begränsa resultatet till en viss kommun. Kommun kan anges med namn eller kommunkod:
+
+```r
+hamta_enheter(
+  verksamhet = "Förskola",
+  kommun = "Haninge"
+)
+```
+
+eller:
+
+```r
+hamta_enheter(
+  verksamhet = "V11",
+  kommun = "0136"
+)
+```
+
+Om endast `verksamhet` och eventuellt `kommun` anges returneras en lista över enheterna med bland annat enhets-ID, enhetsnamn, verksamhet, kommunkod och kommunnamn.
+
+Det går även att hämta nyckeltalsvärden på enhetsnivå:
+
+```r
+hamta_enheter(
+  verksamhet = "V11",
+  kommun = "0136",
+  nyckeltal = "N11808",
+  ar = 2025
+)
+```
+
+Flera nyckeltal och år kan anges samtidigt:
+
+```r
+hamta_enheter(
+  verksamhet = "V11",
+  kommun = "0136",
+  nyckeltal = c("N11808", "N11809"),
+  ar = 2023:2025
+)
+```
+
+Kön kan filtreras med `kon` på samma sätt som i `hamta_fran_kolada()`:
+
+```r
+hamta_enheter(
+  verksamhet = "V11",
+  kommun = "0136",
+  nyckeltal = "N11808",
+  ar = 2025,
+  kon = "T"
+)
+```
+
+Det går även att söka efter enheter utifrån delar av enhetsnamnet med `sok`:
+
+```r
+hamta_enheter(
+  verksamhet = "Förskola",
+  kommun = "Haninge",
+  sok = "Montessori"
+)
+```
+
+Mer information:
+
+```r
+?hamta_enheter
 ```
 
 ## Exempel på arbetsflöde
@@ -691,6 +802,7 @@ Alla huvudfunktioner finns med både svenska och engelska funktionsnamn.
 | `senaste_varde()` | `latest_value()` | Hämtar den senaste tillgängliga observationen. |
 | `forandring()` | `change()` | Beräknar absolut och procentuell förändring mellan två år. |
 | `hamta_jamforelse()` | `get_comparison()` | Jämför en kommun med kommuner i samma län, SKR-kommungrupp eller grupper av liknande kommuner. |
+| `hamta_enheter()` | `get_units()` | Hämtar organisatoriska enheter och, valfritt, nyckeltalsdata på enhetsnivå. |
 
 Dokumentation för de svenska funktionerna finns även direkt i R:
 
@@ -704,6 +816,7 @@ Dokumentation för de svenska funktionerna finns även direkt i R:
 ?senaste_varde
 ?forandring
 ?hamta_jamforelse
+?hamta_enheter
 ```
 
 ## English users
@@ -722,6 +835,7 @@ The English functions provide the same functionality as the Swedish functions, b
 | `senaste_varde()` | `latest_value()` |
 | `forandring()` | `change()` |
 | `hamta_jamforelse()` | `get_comparison()` |
+| `hamta_enheter()` | `get_units()` |
 
 ### Get data from Kolada
 
@@ -1034,6 +1148,119 @@ More information:
 
 ```r
 ?get_comparison
+?get_units
+```
+
+
+### Get organizational units and unit-level data
+
+Use `get_units()` to retrieve organizational units from Kolada, such as preschools, compulsory schools, upper secondary schools and units within elderly care and LSS.
+
+The activity can be specified using an English activity name:
+
+```r
+get_units(
+  activity = "preschool"
+)
+```
+
+or directly using a Kolada unit type code:
+
+```r
+get_units(
+  activity = "V11"
+)
+```
+
+The result can be limited to a municipality by name or code:
+
+```r
+get_units(
+  activity = "preschool",
+  municipality = "Haninge"
+)
+```
+
+or:
+
+```r
+get_units(
+  activity = "V11",
+  municipality = "0136"
+)
+```
+
+If only `activity` and optionally `municipality` are specified, the function returns a list of units including unit ID, unit name, unit type, municipality code and municipality name.
+
+KPI values can also be retrieved at unit level:
+
+```r
+get_units(
+  activity = "preschool",
+  municipality = "Haninge",
+  kpi = "N11808",
+  year = 2025
+)
+```
+
+Multiple KPIs and years can be requested:
+
+```r
+get_units(
+  activity = "preschool",
+  municipality = "Haninge",
+  kpi = c("N11808", "N11809"),
+  year = 2023:2025
+)
+```
+
+Gender can be filtered using `gender`:
+
+```r
+get_units(
+  activity = "preschool",
+  municipality = "Haninge",
+  kpi = "N11808",
+  year = 2025,
+  gender = "T"
+)
+```
+
+Units can also be filtered by unit name using `search`:
+
+```r
+get_units(
+  activity = "preschool",
+  municipality = "Haninge",
+  search = "Montessori"
+)
+```
+
+Common values for `activity` include:
+
+| `activity` | Unit type |
+|---|---|
+| `"preschool"` | Preschool |
+| `"compulsory_school"` | Compulsory school |
+| `"upper_secondary_school"` | Upper secondary school |
+| `"home_care"` | Home care |
+| `"special_housing_elderly"` | Special housing, elderly |
+| `"lss_special_service_housing"` | LSS housing with special services |
+| `"lss_daily_activity"` | LSS daily activity |
+| `"lss_group_home"` | LSS group home |
+| `"lss_service_home"` | LSS service home |
+| `"social_services_housing_support"` | Social Services housing support |
+| `"social_services_special_housing"` | Social Services housing with special services |
+| `"social_services_employment"` | Social Services employment |
+| `"domestic_violence"` | Domestic violence |
+| `"properties"` | Properties |
+
+Kolada unit type codes such as `"V11"` can always be used directly.
+
+More information:
+
+```r
+?get_units
 ```
 
 ## Functions
@@ -1048,6 +1275,7 @@ More information:
 | `latest_value()` | Retrieves the latest available observation. |
 | `change()` | Calculates absolute and percentage change between two years. |
 | `get_comparison()` | Compares a municipality with municipalities in the same county, SKR municipality group or groups of similar municipalities. |
+| `get_units()` | Retrieves organizational units and, optionally, KPI data at unit level. |
 
 Documentation for the English functions is also available directly in R:
 
@@ -1061,5 +1289,6 @@ Documentation for the English functions is also available directly in R:
 ?latest_value
 ?change
 ?get_comparison
+?get_units
 ```
 

@@ -20,7 +20,7 @@ senaste_varde(
 \item{kon}{Valfritt kön: \code{"T"}, \code{"K"} eller \code{"M"}.}
 
 \item{kommuntyp}{Valfri områdestyp:
-\code{"K"} = kommun och \code{"R"} = region.}
+\code{"K"} = kommun och \code{"R"} eller \code{"L"} = region.}
 
 \item{bortfall}{Logiskt värde. Om \code{FALSE} hämtas senaste
 observationen där ett faktiskt värde finns. Om \code{TRUE}

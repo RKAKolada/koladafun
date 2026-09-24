@@ -8,7 +8,7 @@ get_municipalities(type = NULL, search = NULL)
 }
 \arguments{
 \item{type}{Optional area type:
-\code{"K"} = municipality, \code{"R"} = region.}
+\code{"K"} = municipality, \code{"R"} or \code{"L"} = region.}
 
 \item{search}{Optional search text for name or code.}
 }

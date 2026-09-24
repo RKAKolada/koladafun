@@ -25,7 +25,7 @@ change(
 \item{gender}{Optional gender filter.}
 
 \item{municipality_type}{Optional area type:
-\code{"K"} = municipality, \code{"R"} = region.}
+\code{"K"} = municipality, \code{"R"} or \code{"L"} = region.}
 }
 \value{
 A data.frame with values for both years and calculated change.

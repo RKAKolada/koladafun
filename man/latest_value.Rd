@@ -20,7 +20,7 @@ latest_value(
 \item{gender}{Optional gender filter.}
 
 \item{municipality_type}{Optional area type:
-\code{"K"} = municipality, \code{"R"} = region.}
+\code{"K"} = municipality, \code{"R"} or \code{"L"} = region.}
 
 \item{include_missing}{Logical. If \code{FALSE}, the latest observation
 with an actual value is returned. If \code{TRUE}, observations with

@@ -33,8 +33,10 @@ Flera värden kan anges, exempelvis \code{c("K", "M")}.
 Om NULL returneras alla tillgängliga kön.}
 
 \item{kommuntyp}{Valfritt filter för områdestyp.
-\code{"K"} = kommun och \code{"R"} = region.
-Flera kan anges med \code{c("K", "R")}.}
+\code{"K"} = kommun och \code{"R"} eller \code{"L"} = region.
+Koladas API använder \code{"L"} för region, men både \code{"R"} och \code{"L"}
+accepteras av funktionen.
+Flera kan anges med exempelvis \code{c("K", "R")}.}
 
 \item{per_page}{Antal observationer per sida i API-anropet.
 Standard är 5000.}

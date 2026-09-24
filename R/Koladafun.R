@@ -1,3 +1,225 @@
+# =========================================================
+# Intern cache och säkra API-anrop
+# =========================================================
+
+# Cache gäller under den aktuella R-sessionen.
+# Själva nyckeltalsvärdena cachelagras inte, endast metadata.
+.kolada_cache <- new.env(parent = emptyenv())
+
+
+.cache_get <- function(namn) {
+
+  if (exists(
+    namn,
+    envir = .kolada_cache,
+    inherits = FALSE
+  )) {
+    return(
+      get(
+        namn,
+        envir = .kolada_cache,
+        inherits = FALSE
+      )
+    )
+  }
+
+  NULL
+}
+
+
+.cache_set <- function(
+    namn,
+    varde
+) {
+
+  assign(
+    namn,
+    varde,
+    envir = .kolada_cache
+  )
+
+  invisible(varde)
+}
+
+
+# Säkert API-anrop med retry.
+# Väntetiden ökar mellan försöken: 1, 2, 3 sekunder som standard.
+.kolada_fromJSON <- function(
+    url,
+    retries = 3,
+    wait = 1
+) {
+
+  senaste_fel <- NULL
+
+  for (forsok in seq_len(retries)) {
+
+    resultat <- tryCatch(
+      jsonlite::fromJSON(url),
+      error = function(e) {
+        senaste_fel <<- e
+        NULL
+      }
+    )
+
+    if (!is.null(resultat)) {
+      return(resultat)
+    }
+
+    if (forsok < retries) {
+      Sys.sleep(
+        wait * forsok
+      )
+    }
+  }
+
+  stop(
+    "Kunde inte hämta data från Koladas API efter ",
+    retries,
+    " försök.\n",
+    "URL: ",
+    url,
+    if (!is.null(senaste_fel)) {
+      paste0(
+        "\nFel: ",
+        conditionMessage(senaste_fel)
+      )
+    } else {
+      ""
+    },
+    call. = FALSE
+  )
+}
+
+
+# Metadata för kommuner och regioner.
+.hamta_kommunmetadata <- function() {
+
+  cache <- .cache_get(
+    "kommunmetadata"
+  )
+
+  if (!is.null(cache)) {
+    return(cache)
+  }
+
+  svar <- .kolada_fromJSON(
+    "https://api.kolada.se/v3/municipality?page=1&per_page=5000"
+  )
+
+  kommuner <- as.data.frame(
+    svar$values
+  )
+
+  kommuner$id <- as.character(
+    kommuner$id
+  )
+
+  kommuner$title <- as.character(
+    kommuner$title
+  )
+
+  kommuner$type <- as.character(
+    kommuner$type
+  )
+
+  .cache_set(
+    "kommunmetadata",
+    kommuner
+  )
+
+  kommuner
+}
+
+
+# Metadata för ett enskilt nyckeltal.
+.hamta_kpi_metadata <- function(kpi_id) {
+
+  kpi_id <- as.character(kpi_id)
+
+  cache_namn <- paste0(
+    "kpi_",
+    kpi_id
+  )
+
+  cache <- .cache_get(
+    cache_namn
+  )
+
+  if (!is.null(cache)) {
+    return(cache)
+  }
+
+  svar <- .kolada_fromJSON(
+    paste0(
+      "https://api.kolada.se/v3/kpi/",
+      kpi_id
+    )
+  )
+
+  if (
+    is.null(svar$values) ||
+    nrow(as.data.frame(svar$values)) == 0
+  ) {
+    stop(
+      "Nyckeltalet ",
+      kpi_id,
+      " kunde inte hittas."
+    )
+  }
+
+  resultat <- as.data.frame(
+    svar$values
+  )
+
+  .cache_set(
+    cache_namn,
+    resultat
+  )
+
+  resultat
+}
+
+
+# Kommungrupper används bland annat av hamta_jamforelse().
+.hamta_kommungrupper <- function() {
+
+  cache <- .cache_get(
+    "kommungrupper"
+  )
+
+  if (!is.null(cache)) {
+    return(cache)
+  }
+
+  svar <- .kolada_fromJSON(
+    "https://api.kolada.se/v3/municipality_groups/?page=1&per_page=5000"
+  )
+
+  grupper <- svar$values |>
+    tidyr::unnest(members)
+
+  grupper$id <- as.character(
+    grupper$id
+  )
+
+  grupper$member_id <- as.character(
+    grupper$member_id
+  )
+
+  grupper$title <- as.character(
+    grupper$title
+  )
+
+  .cache_set(
+    "kommungrupper",
+    grupper
+  )
+
+  grupper
+}
+
+
 #' Hämta data från Kolada
 #'
 #' Hämtar data från Koladas API för ett eller flera nyckeltal.
@@ -27,8 +249,10 @@
 #'   Om NULL returneras alla tillgängliga kön.
 #'
 #' @param kommuntyp Valfritt filter för områdestyp.
-#'   `"K"` = kommun och `"R"` = region.
-#'   Flera kan anges med `c("K", "R")`.
+#'   `"K"` = kommun och `"R"` eller `"L"` = region.
+#'   Koladas API använder `"L"` för region, men både `"R"` och `"L"`
+#'   accepteras av funktionen.
+#'   Flera kan anges med exempelvis `c("K", "R")`.
 #'
 #' @param per_page Antal observationer per sida i API-anropet.
 #'   Standard är 5000.
@@ -83,15 +307,8 @@ hamta_fran_kolada <- function(
   nyckeltal <- as.character(nyckeltal)
 
   # Hämta metadata för kommuner och regioner
-  kommun_svar <- jsonlite::fromJSON(
-    "https://api.kolada.se/v3/municipality?page=1&per_page=5000"
-  )
-
-  kommuner <- as.data.frame(kommun_svar$values)
-
-  kommuner$id <- as.character(kommuner$id)
-  kommuner$title <- as.character(kommuner$title)
-  kommuner$type <- as.character(kommuner$type)
+  # Metadata cachelagras under den aktuella R-sessionen.
+  kommuner <- .hamta_kommunmetadata()
 
   # Filtrera på kommuntyp
   if (!is.null(kommuntyp)) {
@@ -221,7 +438,7 @@ hamta_fran_kolada <- function(
         per_page
       )
 
-      svar <- jsonlite::fromJSON(
+      svar <- .kolada_fromJSON(
         aktuell_url
       )
 
@@ -249,27 +466,13 @@ hamta_fran_kolada <- function(
     nyckeltal,
     function(kpi_id) {
 
-      url <- paste0(
-        "https://api.kolada.se/v3/kpi/",
+      metadata <- .hamta_kpi_metadata(
         kpi_id
       )
 
-      svar <- jsonlite::fromJSON(url)
-
-      if (
-        is.null(svar$values) ||
-        nrow(as.data.frame(svar$values)) == 0
-      ) {
-        stop(
-          "Nyckeltalet ",
-          kpi_id,
-          " kunde inte hittas."
-        )
-      }
-
       data.frame(
         kpi = kpi_id,
-        kpi_name = svar$values$title[1],
+        kpi_name = metadata$title[1],
         stringsAsFactors = FALSE
       )
     }
@@ -486,7 +689,7 @@ hamta_fran_kolada <- function(
       per_page
     )
 
-    svar <- jsonlite::fromJSON(aktuell_url)
+    svar <- .kolada_fromJSON(aktuell_url)
 
     if (
       is.null(svar$values) ||
@@ -547,9 +750,21 @@ sok_nyckeltal <- function(
     stop("Du måste ange ett sökord.")
   }
 
-  nyckeltal <- .hamta_alla_sidor(
-    "https://api.kolada.se/v3/kpi"
+  nyckeltal <- .cache_get(
+    "alla_nyckeltal"
   )
+
+  if (is.null(nyckeltal)) {
+
+    nyckeltal <- .hamta_alla_sidor(
+      "https://api.kolada.se/v3/kpi"
+    )
+
+    .cache_set(
+      "alla_nyckeltal",
+      nyckeltal
+    )
+  }
 
   sokkolumner <- intersect(
     c(
@@ -662,26 +877,8 @@ info_nyckeltal <- function(nyckeltal) {
     nyckeltal,
     function(kpi_id) {
 
-      url <- paste0(
-        "https://api.kolada.se/v3/kpi/",
+      .hamta_kpi_metadata(
         kpi_id
-      )
-
-      svar <- jsonlite::fromJSON(url)
-
-      if (
-        is.null(svar$values) ||
-        nrow(as.data.frame(svar$values)) == 0
-      ) {
-        stop(
-          "Nyckeltalet ",
-          kpi_id,
-          " kunde inte hittas."
-        )
-      }
-
-      as.data.frame(
-        svar$values
       )
     }
   )
@@ -718,7 +915,7 @@ info_nyckeltal <- function(nyckeltal) {
 #' Resultatet kan filtreras på områdestyp eller namn/kod.
 #'
 #' @param typ Valfri områdestyp.
-#'   `"K"` = kommun och `"R"` = region.
+#'   `"K"` = kommun och `"R"` eller `"L"` = region.
 #' @param sok Valfri söktext för namn eller kod.
 #'
 #' @return En data.frame med områdeskod, namn och typ.
@@ -737,21 +934,7 @@ hamta_kommuner <- function(
     sok = NULL
 ) {
 
-  kommuner <- .hamta_alla_sidor(
-    "https://api.kolada.se/v3/municipality"
-  )
-
-  kommuner$id <- as.character(
-    kommuner$id
-  )
-
-  kommuner$title <- as.character(
-    kommuner$title
-  )
-
-  kommuner$type <- as.character(
-    kommuner$type
-  )
+  kommuner <- .hamta_kommunmetadata()
 
   # Gör regiontypen enklare för användaren
   kommuner$type[
@@ -777,7 +960,7 @@ hamta_kommuner <- function(
           ogiltiga,
           collapse = ", "
         ),
-        ". Använd K eller R."
+        ". Använd K för kommun eller R/L för region."
       )
     }
 
@@ -903,7 +1086,7 @@ tillgangliga_ar <- function(
 #' @param kommun Valfri kommun eller region.
 #' @param kon Valfritt kön: `"T"`, `"K"` eller `"M"`.
 #' @param kommuntyp Valfri områdestyp:
-#'   `"K"` = kommun och `"R"` = region.
+#'   `"K"` = kommun och `"R"` eller `"L"` = region.
 #' @param bortfall Logiskt värde. Om `FALSE` hämtas senaste
 #'   observationen där ett faktiskt värde finns. Om `TRUE`
 #'   accepteras även observationer där värdet saknas, exempelvis
@@ -1360,24 +1543,7 @@ hamta_jamforelse <- function(
   # Hämta kommungrupper
   # ---------------------------------------------------------
 
-  grupper_svar <- jsonlite::fromJSON(
-    "https://api.kolada.se/v3/municipality_groups/?page=1&per_page=5000"
-  )
-
-  grupper <- grupper_svar$values |>
-    tidyr::unnest(members)
-
-  grupper$id <- as.character(
-    grupper$id
-  )
-
-  grupper$member_id <- as.character(
-    grupper$member_id
-  )
-
-  grupper$title <- as.character(
-    grupper$title
-  )
+  grupper <- .hamta_kommungrupper()
 
 
   # ---------------------------------------------------------
@@ -1839,7 +2005,7 @@ hamta_jamforelse <- function(
             )
 
             svar <- tryCatch(
-              jsonlite::fromJSON(url),
+              .kolada_fromJSON(url),
               error = function(e) NULL
             )
 
@@ -1881,16 +2047,13 @@ hamta_jamforelse <- function(
         unique(data_grupp$kpi),
         function(kpi_id) {
 
-          svar <- jsonlite::fromJSON(
-            paste0(
-              "https://api.kolada.se/v3/kpi/",
-              kpi_id
-            )
+          metadata <- .hamta_kpi_metadata(
+            kpi_id
           )
 
           data.frame(
             kpi = kpi_id,
-            kpi_name = svar$values$title[1],
+            kpi_name = metadata$title[1],
             stringsAsFactors = FALSE
           )
         }
@@ -1978,6 +2141,599 @@ hamta_jamforelse <- function(
   rownames(resultat) <- NULL
 
   as.data.frame(resultat)
+}
+
+#' Hämta enheter från Kolada
+#'
+#' Hämtar organisatoriska enheter och, valfritt,
+#' nyckeltalsdata på enhetsnivå.
+#'
+#' @param verksamhet Verksamhet eller V-kod, exempelvis
+#'   `"Förskola"` eller `"V11"`.
+#' @param kommun Valfri kommun angiven med namn eller kod.
+#' @param nyckeltal Valfritt nyckeltals-ID.
+#' @param ar Valfritt år eller flera år.
+#' @param kon Valfritt kön: `"T"`, `"K"` eller `"M"`.
+#' @param sok Valfri söktext för enhetsnamn.
+#' @param batch_size Antal enheter per API-anrop. Standard är 25.
+#'
+#' @return En data.frame med enheter och, om nyckeltal anges,
+#'   nyckeltalsvärden på enhetsnivå.
+#'
+#' @export
+hamta_enheter <- function(
+    verksamhet = NULL,
+    kommun = NULL,
+    nyckeltal = NULL,
+    ar = NULL,
+    kon = NULL,
+    sok = NULL,
+    batch_size = 25
+) {
+
+  verksamhetskoder <- c(
+    "förskola" = "V11",
+    "grundskola" = "V15",
+    "gymnasieskola" = "V17",
+    "hemtjänst" = "V21",
+    "särskilt boende" = "V23",
+    "lss boende med särskild service" = "V25",
+    "lss daglig verksamhet" = "V26",
+    "gruppbostad lss" = "V29",
+    "servicebostad lss" = "V30",
+    "sol boendestöd" = "V31",
+    "sol boende med särskild service" = "V32",
+    "sol sysselsättning" = "V34",
+    "våld i nära relationer" = "V45",
+    "fastigheter" = "V60"
+  )
+
+  # ---------------------------------------------------------
+  # Matcha verksamhet
+  # ---------------------------------------------------------
+
+  verksamhetskod <- NULL
+
+  if (!is.null(verksamhet)) {
+
+    verksamhet_chr <- as.character(
+      verksamhet
+    )
+
+    if (
+      toupper(verksamhet_chr) %in%
+      unname(verksamhetskoder)
+    ) {
+
+      verksamhetskod <- toupper(
+        verksamhet_chr
+      )
+
+    } else {
+
+      verksamhet_lower <- tolower(
+        verksamhet_chr
+      )
+
+      if (
+        !verksamhet_lower %in%
+        names(verksamhetskoder)
+      ) {
+        stop(
+          "Okänd verksamhet: ",
+          verksamhet,
+          "."
+        )
+      }
+
+      verksamhetskod <- unname(
+        verksamhetskoder[
+          verksamhet_lower
+        ]
+      )
+    }
+  }
+
+
+  # ---------------------------------------------------------
+  # Matcha kommun
+  # ---------------------------------------------------------
+
+  kommun_id <- NULL
+
+  if (!is.null(kommun)) {
+
+    kommuner <- hamta_kommuner(
+      typ = "K"
+    )
+
+    kommun_chr <- as.character(
+      kommun
+    )
+
+    traff <- kommuner[
+      kommuner$municipality == kommun_chr |
+        tolower(
+          kommuner$municipality_name
+        ) == tolower(kommun_chr),
+      ,
+      drop = FALSE
+    ]
+
+    if (nrow(traff) == 0) {
+      stop(
+        "Hittar ingen kommun med namn eller kod: ",
+        kommun
+      )
+    }
+
+    if (nrow(traff) > 1) {
+      stop(
+        "Flera kommuner matchade: ",
+        kommun,
+        ". Ange kommunkod."
+      )
+    }
+
+    kommun_id <- traff$municipality[1]
+  }
+
+
+  # ---------------------------------------------------------
+  # Bygg URL för enheter
+  # ---------------------------------------------------------
+
+  url <- "https://api.kolada.se/v3/ou"
+
+  parametrar <- character(0)
+
+  if (!is.null(kommun_id)) {
+
+    parametrar <- c(
+      parametrar,
+      paste0(
+        "municipality=",
+        kommun_id
+      )
+    )
+  }
+
+  if (!is.null(sok)) {
+
+    parametrar <- c(
+      parametrar,
+      paste0(
+        "title=",
+        utils::URLencode(
+          sok,
+          reserved = TRUE
+        )
+      )
+    )
+  }
+
+  if (length(parametrar) > 0) {
+
+    url <- paste0(
+      url,
+      "?",
+      paste(
+        parametrar,
+        collapse = "&"
+      )
+    )
+  }
+
+
+  # ---------------------------------------------------------
+  # Hämta enheter
+  # ---------------------------------------------------------
+
+  enheter <- .hamta_alla_sidor(
+    url
+  )
+
+  if (nrow(enheter) == 0) {
+
+    message(
+      "Inga enheter hittades."
+    )
+
+    return(
+      data.frame()
+    )
+  }
+
+  enheter$id <- as.character(
+    enheter$id
+  )
+
+  enheter$municipality <- as.character(
+    enheter$municipality
+  )
+
+
+  # ---------------------------------------------------------
+  # Filtrera på verksamhetskod
+  # ---------------------------------------------------------
+
+  if (!is.null(verksamhetskod)) {
+
+    enheter <- enheter[
+      startsWith(
+        enheter$id,
+        verksamhetskod
+      ),
+      ,
+      drop = FALSE
+    ]
+  }
+
+  if (nrow(enheter) == 0) {
+
+    message(
+      "Inga enheter hittades för den valda verksamheten."
+    )
+
+    return(
+      data.frame()
+    )
+  }
+
+
+  # ---------------------------------------------------------
+  # Lägg till verksamhetsnamn
+  # ---------------------------------------------------------
+
+  kod_till_namn <- setNames(
+    names(verksamhetskoder),
+    verksamhetskoder
+  )
+
+  enheter$unit_type <- substr(
+    enheter$id,
+    1,
+    3
+  )
+
+  enheter$unit_type_name <- unname(
+    kod_till_namn[
+      enheter$unit_type
+    ]
+  )
+
+
+  # ---------------------------------------------------------
+  # Lägg till kommunnamn
+  # ---------------------------------------------------------
+
+  kommunmetadata <- .hamta_kommunmetadata()
+
+  enheter <- enheter |>
+    dplyr::left_join(
+      kommunmetadata |>
+        dplyr::select(
+          municipality = id,
+          municipality_name = title
+        ),
+      by = "municipality"
+    ) |>
+    dplyr::rename(
+      unit_id = id,
+      unit_name = title
+    ) |>
+    dplyr::select(
+      unit_id,
+      unit_name,
+      unit_type,
+      unit_type_name,
+      municipality,
+      municipality_name
+    ) |>
+    dplyr::arrange(
+      municipality_name,
+      unit_name
+    )
+
+
+  # ---------------------------------------------------------
+  # Om nyckeltal inte anges:
+  # returnera endast enhetslistan
+  # ---------------------------------------------------------
+
+  if (is.null(nyckeltal)) {
+
+    rownames(enheter) <- NULL
+
+    return(
+      as.data.frame(enheter)
+    )
+  }
+
+
+  # ---------------------------------------------------------
+  # Kontrollera nyckeltal och kön
+  # ---------------------------------------------------------
+
+  nyckeltal <- as.character(
+    nyckeltal
+  )
+
+  if (!is.null(kon)) {
+
+    kon <- toupper(
+      as.character(kon)
+    )
+
+    ogiltiga_kon <- setdiff(
+      kon,
+      c(
+        "T",
+        "K",
+        "M"
+      )
+    )
+
+    if (length(ogiltiga_kon) > 0) {
+
+      stop(
+        "Ogiltigt värde för kön: ",
+        paste(
+          ogiltiga_kon,
+          collapse = ", "
+        ),
+        ". Använd T, K eller M."
+      )
+    }
+  }
+
+
+  # ---------------------------------------------------------
+  # Dela enheter i batchar
+  # ---------------------------------------------------------
+
+  enhets_batchar <- split(
+    enheter$unit_id,
+    ceiling(
+      seq_along(
+        enheter$unit_id
+      ) / batch_size
+    )
+  )
+
+
+  # ---------------------------------------------------------
+  # Dela år i batchar
+  # ---------------------------------------------------------
+
+  if (is.null(ar)) {
+
+    ar_batchar <- list(
+      NULL
+    )
+
+  } else {
+
+    ar <- as.character(
+      ar
+    )
+
+    ar_batchar <- split(
+      ar,
+      ceiling(
+        seq_along(ar) / 20
+      )
+    )
+  }
+
+
+  # ---------------------------------------------------------
+  # Hämta nyckeltalsdata på enhetsnivå
+  # ---------------------------------------------------------
+
+  resultat <- list()
+  index <- 1
+
+  for (kpi_id in nyckeltal) {
+
+    for (enhets_batch in enhets_batchar) {
+
+      enhets_del <- paste(
+        enhets_batch,
+        collapse = ","
+      )
+
+      for (ar_batch in ar_batchar) {
+
+        url_data <- paste0(
+          "https://api.kolada.se/v3/oudata/kpi/",
+          kpi_id,
+          "/ou/",
+          enhets_del
+        )
+
+        if (!is.null(ar_batch)) {
+
+          url_data <- paste0(
+            url_data,
+            "/year/",
+            paste(
+              ar_batch,
+              collapse = ","
+            )
+          )
+        }
+
+        svar <- tryCatch(
+          .hamta_alla_sidor(
+            url_data
+          ),
+          error = function(e) {
+            NULL
+          }
+        )
+
+        if (
+          is.null(svar) ||
+          nrow(svar) == 0
+        ) {
+          next
+        }
+
+        # API-resultatet kan innehålla nästlade values
+        if ("values" %in% names(svar)) {
+
+          svar <- svar |>
+            tidyr::unnest(values)
+        }
+
+        resultat[[index]] <- svar
+
+        index <- index + 1
+      }
+    }
+  }
+
+
+  # ---------------------------------------------------------
+  # Slå ihop enhetsdata
+  # ---------------------------------------------------------
+
+  enhetsdata <- dplyr::bind_rows(
+    resultat
+  )
+
+  if (nrow(enhetsdata) == 0) {
+
+    message(
+      "Inga nyckeltalsvärden hittades för de valda enheterna."
+    )
+
+    rownames(enheter) <- NULL
+
+    return(
+      as.data.frame(enheter)
+    )
+  }
+
+
+  # ---------------------------------------------------------
+  # Filtrera kön
+  # ---------------------------------------------------------
+
+  if (!is.null(kon)) {
+
+    enhetsdata <- enhetsdata |>
+      dplyr::filter(
+        gender %in% kon
+      )
+  }
+
+
+  # ---------------------------------------------------------
+  # Identifiera kolumnen med enhets-ID
+  # ---------------------------------------------------------
+
+  ou_kolumn <- intersect(
+    c(
+      "ou",
+      "unit",
+      "organizationalunit",
+      "organizational_unit"
+    ),
+    names(enhetsdata)
+  )
+
+  if (length(ou_kolumn) == 0) {
+
+    stop(
+      "Kunde inte identifiera enhets-ID i API-resultatet."
+    )
+  }
+
+  ou_kolumn <- ou_kolumn[1]
+
+  enhetsdata <- enhetsdata |>
+    dplyr::rename(
+      unit_id = dplyr::all_of(
+        ou_kolumn
+      )
+    )
+
+  enhetsdata$unit_id <- as.character(
+    enhetsdata$unit_id
+  )
+
+
+  # ---------------------------------------------------------
+  # Lägg till KPI-namn
+  # ---------------------------------------------------------
+
+  kpi_metadata <- lapply(
+    unique(
+      enhetsdata$kpi
+    ),
+    function(kpi_id) {
+
+      metadata <- .hamta_kpi_metadata(
+        kpi_id
+      )
+
+      data.frame(
+        kpi = kpi_id,
+        kpi_name = metadata$title[1],
+        stringsAsFactors = FALSE
+      )
+    }
+  )
+
+  kpi_metadata <- dplyr::bind_rows(
+    kpi_metadata
+  )
+
+  enhetsdata <- enhetsdata |>
+    dplyr::left_join(
+      kpi_metadata,
+      by = "kpi"
+    )
+
+
+  # ---------------------------------------------------------
+  # Lägg ihop enhetsinformation och nyckeltalsvärden
+  # ---------------------------------------------------------
+
+  enheter <- enheter |>
+    dplyr::left_join(
+      enhetsdata |>
+        dplyr::select(
+          unit_id,
+          kpi,
+          kpi_name,
+          period,
+          value,
+          gender,
+          status
+        ),
+      by = "unit_id"
+    ) |>
+    dplyr::arrange(
+      municipality_name,
+      unit_name,
+      kpi,
+      period,
+      gender
+    )
+
+
+  # ---------------------------------------------------------
+  # Returnera resultat
+  # ---------------------------------------------------------
+
+  rownames(enheter) <- NULL
+
+  as.data.frame(
+    enheter
+  )
 }
 
 # =========================================================
@@ -2090,7 +2846,7 @@ kpi_info <- function(kpi) {
 #' English wrapper for [hamta_kommuner()].
 #'
 #' @param type Optional area type:
-#'   `"K"` = municipality, `"R"` = region.
+#'   `"K"` = municipality, `"R"` or `"L"` = region.
 #' @param search Optional search text for name or code.
 #'
 #' @return A data.frame with municipalities and regions.
@@ -2122,7 +2878,7 @@ get_municipalities <- function(
 #' @param kpi One or more Kolada KPI IDs.
 #' @param municipality Optional municipality or region name/code.
 #' @param municipality_type Optional area type:
-#'   `"K"` = municipality, `"R"` = region.
+#'   `"K"` = municipality, `"R"` or `"L"` = region.
 #'
 #' @return A data.frame with available years.
 #'
@@ -2157,7 +2913,7 @@ available_years <- function(
 #' @param municipality Optional municipality or region.
 #' @param gender Optional gender filter.
 #' @param municipality_type Optional area type:
-#'   `"K"` = municipality, `"R"` = region.
+#'   `"K"` = municipality, `"R"` or `"L"` = region.
 #' @param include_missing Logical. If `FALSE`, the latest observation
 #'   with an actual value is returned. If `TRUE`, observations with
 #'   missing values due to e.g. confidentiality or missing data are
@@ -2202,7 +2958,7 @@ latest_value <- function(
 #' @param end_year Last year in the comparison.
 #' @param gender Optional gender filter.
 #' @param municipality_type Optional area type:
-#'   `"K"` = municipality, `"R"` = region.
+#'   `"K"` = municipality, `"R"` or `"L"` = region.
 #'
 #' @return A data.frame with values for both years and calculated change.
 #'
@@ -2441,6 +3197,279 @@ get_comparison <- function(
   as.data.frame(resultat)
 }
 
+#' Get organizational units from Kolada
+#'
+#' English wrapper for [hamta_enheter()].
+#'
+#' Retrieves organizational units from Kolada, optionally filtered
+#' by activity type, municipality, KPI, year, gender or unit name.
+#'
+#' Activity can be specified using either an English activity name
+#' or a Kolada unit type code such as `"V11"`.
+#'
+#' @param activity Optional activity type. Examples include
+#'   `"preschool"`, `"compulsory_school"`, `"upper_secondary_school"`
+#'   or a Kolada unit type code such as `"V11"`.
+#' @param municipality Optional municipality name or code,
+#'   for example `"Haninge"` or `"0136"`.
+#' @param kpi Optional one or more Kolada KPI IDs.
+#' @param year Optional year or vector of years.
+#' @param gender Optional gender filter:
+#'   `"T"` = total, `"K"` = women, `"M"` = men.
+#' @param search Optional search text for unit name.
+#' @param batch_size Number of units included in each API request.
+#'   Default is 25.
+#'
+#' @return A data.frame with organizational units and, if `kpi`
+#'   is specified, KPI values for the units.
+#'
+#' @examples
+#' \dontrun{
+#'
+#' get_units(
+#'   activity = "preschool",
+#'   municipality = "Haninge"
+#' )
+#'
+#' get_units(
+#'   activity = "V11",
+#'   municipality = "0136"
+#' )
+#'
+#' get_units(
+#'   activity = "preschool",
+#'   municipality = "Haninge",
+#'   kpi = "N11808",
+#'   year = 2025
+#' )
+#'
+#' }
+#'
+#' @export
+get_units <- function(
+    activity = NULL,
+    municipality = NULL,
+    kpi = NULL,
+    year = NULL,
+    gender = NULL,
+    search = NULL,
+    batch_size = 25
+) {
+
+  # ---------------------------------------------------------
+  # Translate activity names
+  # ---------------------------------------------------------
+
+  if (!is.null(activity)) {
+
+    activity_chr <- as.character(
+      activity
+    )
+
+    # V-codes can be passed directly
+    if (!grepl(
+      "^V[0-9]{2}$",
+      toupper(activity_chr)
+    )) {
+
+      activity_lower <- tolower(
+        activity_chr
+      )
+
+      activity_map <- c(
+        "preschool" =
+          "förskola",
+
+        "compulsory_school" =
+          "grundskola",
+
+        "compulsory school" =
+          "grundskola",
+
+        "upper_secondary_school" =
+          "gymnasieskola",
+
+        "upper secondary school" =
+          "gymnasieskola",
+
+        "home_care" =
+          "hemtjänst",
+
+        "home care" =
+          "hemtjänst",
+
+        "special_housing_elderly" =
+          "särskilt boende",
+
+        "special housing elderly" =
+          "särskilt boende",
+
+        "lss_special_service_housing" =
+          "lss boende med särskild service",
+
+        "lss special service housing" =
+          "lss boende med särskild service",
+
+        "lss_daily_activity" =
+          "lss daglig verksamhet",
+
+        "lss daily activity" =
+          "lss daglig verksamhet",
+
+        "lss_group_home" =
+          "gruppbostad lss",
+
+        "lss group home" =
+          "gruppbostad lss",
+
+        "lss_service_home" =
+          "servicebostad lss",
+
+        "lss service home" =
+          "servicebostad lss",
+
+        "social_services_housing_support" =
+          "sol boendestöd",
+
+        "social services housing support" =
+          "sol boendestöd",
+
+        "social_services_special_housing" =
+          "sol boende med särskild service",
+
+        "social services special housing" =
+          "sol boende med särskild service",
+
+        "social_services_employment" =
+          "sol sysselsättning",
+
+        "social services employment" =
+          "sol sysselsättning",
+
+        "domestic_violence" =
+          "våld i nära relationer",
+
+        "domestic violence" =
+          "våld i nära relationer",
+
+        "properties" =
+          "fastigheter",
+
+        "property" =
+          "fastigheter"
+      )
+
+      if (activity_lower %in% names(activity_map)) {
+
+        activity <- unname(
+          activity_map[
+            activity_lower
+          ]
+        )
+      }
+    }
+  }
+
+
+  # ---------------------------------------------------------
+  # Run Swedish function
+  # ---------------------------------------------------------
+
+  resultat <- hamta_enheter(
+    verksamhet = activity,
+    kommun = municipality,
+    nyckeltal = kpi,
+    ar = year,
+    kon = gender,
+    sok = search,
+    batch_size = batch_size
+  )
+
+
+  # ---------------------------------------------------------
+  # Return empty result if no units were found
+  # ---------------------------------------------------------
+
+  if (nrow(resultat) == 0) {
+    return(resultat)
+  }
+
+
+  # ---------------------------------------------------------
+  # Translate unit type names to English
+  # ---------------------------------------------------------
+
+  if ("unit_type_name" %in% names(resultat)) {
+
+    resultat <- resultat |>
+      dplyr::mutate(
+        unit_type_name = dplyr::case_when(
+          unit_type_name == "förskola" ~
+            "preschool",
+
+          unit_type_name == "grundskola" ~
+            "compulsory school",
+
+          unit_type_name == "gymnasieskola" ~
+            "upper secondary school",
+
+          unit_type_name == "hemtjänst" ~
+            "home care",
+
+          unit_type_name == "särskilt boende" ~
+            "special housing, elderly",
+
+          unit_type_name ==
+            "lss boende med särskild service" ~
+            "LSS housing with special services",
+
+          unit_type_name ==
+            "lss daglig verksamhet" ~
+            "LSS daily activity",
+
+          unit_type_name ==
+            "gruppbostad lss" ~
+            "LSS group home",
+
+          unit_type_name ==
+            "servicebostad lss" ~
+            "LSS service home",
+
+          unit_type_name ==
+            "sol boendestöd" ~
+            "Social Services housing support",
+
+          unit_type_name ==
+            "sol boende med särskild service" ~
+            "Social Services housing with special services",
+
+          unit_type_name ==
+            "sol sysselsättning" ~
+            "Social Services employment",
+
+          unit_type_name ==
+            "våld i nära relationer" ~
+            "domestic violence",
+
+          unit_type_name ==
+            "fastigheter" ~
+            "properties",
+
+          TRUE ~ as.character(
+            unit_type_name
+          )
+        )
+      )
+  }
+
+
+  rownames(resultat) <- NULL
+
+  as.data.frame(
+    resultat
+  )
+}
+
 #' koladafun: Functions for Kolada
 #'
 #' `koladafun` is an R package with functions for searching,
@@ -2458,6 +3487,7 @@ get_comparison <- function(
 #' * [senaste_varde()] - Hämta senaste tillgängliga värde.
 #' * [forandring()] - Beräkna förändring mellan två år.
 #' * [hamta_jamforelse()] - Jämför en kommun med andra kommuner.
+#' * [hamta_enheter()] - Hämta enheter och enhetsdata.
 #'
 #' @section English functions:
 #'
@@ -2469,12 +3499,11 @@ get_comparison <- function(
 #' * [latest_value()] - Get the latest available value.
 #' * [change()] - Calculate change between two years.
 #' * [get_comparison()] - Compare a municipality with other municipalities.
+#' * [get_units()] - Get organizational units and unit-level data.
 #'
 #' @section More information:
 #'
 #' README and source code are available on GitHub:
 #' \url{https://github.com/RKAkolada/koladafun}
 #'
-#' @docType package
-#' @name koladafun
-NULL
+"_PACKAGE"

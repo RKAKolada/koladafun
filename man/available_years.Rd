@@ -12,7 +12,7 @@ available_years(kpi, municipality = NULL, municipality_type = NULL)
 \item{municipality}{Optional municipality or region name/code.}
 
 \item{municipality_type}{Optional area type:
-\code{"K"} = municipality, \code{"R"} = region.}
+\code{"K"} = municipality, \code{"R"} or \code{"L"} = region.}
 }
 \value{
 A data.frame with available years.

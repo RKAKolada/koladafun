@@ -8,7 +8,7 @@ hamta_kommuner(typ = NULL, sok = NULL)
 }
 \arguments{
 \item{typ}{Valfri områdestyp.
-\code{"K"} = kommun och \code{"R"} = region.}
+\code{"K"} = kommun och \code{"R"} eller \code{"L"} = region.}
 
 \item{sok}{Valfri söktext för namn eller kod.}
 }
