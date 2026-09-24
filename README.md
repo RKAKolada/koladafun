@@ -641,7 +641,6 @@ Mer information:
 
 ```r
 ?hamta_jamforelse
-?hamta_enheter
 ```
 
 
@@ -1148,7 +1147,6 @@ More information:
 
 ```r
 ?get_comparison
-?get_units
 ```
 
 
