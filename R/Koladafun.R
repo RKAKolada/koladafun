@@ -2181,6 +2181,26 @@ hamta_jamforelse <- function(
 #' `verksamhet = "Förskola"`, eller direkt med V-kod,
 #' exempelvis `verksamhet = "V11"`.
 #'
+#' Exakta värden som kan anges i `verksamhet` är:
+#'
+#' \tabular{ll}{
+#' \strong{verksamhet} \tab \strong{V-kod} \cr
+#' förskola \tab V11 \cr
+#' grundskola \tab V15 \cr
+#' gymnasieskola \tab V17 \cr
+#' hemtjänst \tab V21 \cr
+#' särskilt boende \tab V23 \cr
+#' lss boende med särskild service \tab V25 \cr
+#' lss daglig verksamhet \tab V26 \cr
+#' gruppbostad lss \tab V29 \cr
+#' servicebostad lss \tab V30 \cr
+#' sol boendestöd \tab V31 \cr
+#' sol boende med särskild service \tab V32 \cr
+#' sol sysselsättning \tab V34 \cr
+#' våld i nära relationer \tab V45 \cr
+#' fastigheter \tab V60
+#' }
+#'
 #' @return En data.frame med enheter och, om nyckeltal anges,
 #' nyckeltalsvärden på enhetsnivå.
 #'
@@ -2204,6 +2224,14 @@ hamta_jamforelse <- function(
 #'   kommun = "0136",
 #'   nyckeltal = "N11808",
 #'   ar = 2025
+#' )
+#'
+#' #' # Hämta nyckelord
+#' hamta_enheter(
+#'   verksamhet = "V11",
+#'   nyckeltal = "N11808",
+#'   ar = 2025,
+#'   kommun = "Montessori"
 #' )
 #' }
 #'
