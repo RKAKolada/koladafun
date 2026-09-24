@@ -15,9 +15,9 @@ get_units(
 )
 }
 \arguments{
-\item{activity}{Optional activity type. Examples include
-\code{"preschool"}, \code{"compulsory_school"}, \code{"upper_secondary_school"}
-or a Kolada unit type code such as \code{"V11"}.}
+\item{activity}{Optional activity type. Can be specified using an
+English activity name or a Kolada V-code, for example
+\code{"preschool"} or \code{"V11"}.}
 
 \item{municipality}{Optional municipality name or code,
 for example \code{"Haninge"} or \code{"0136"}.}
@@ -36,38 +36,81 @@ Default is 25.}
 }
 \value{
 A data.frame with organizational units and, if \code{kpi}
-is specified, KPI values for the units.
+is specified, KPI values at unit level.
 }
 \description{
 English wrapper for \code{\link[=hamta_enheter]{hamta_enheter()}}.
 }
 \details{
-Retrieves organizational units from Kolada, optionally filtered
-by activity type, municipality, KPI, year, gender or unit name.
+Retrieves organizational units from Kolada and, optionally,
+KPI data at unit level.
 
-Activity can be specified using either an English activity name
-or a Kolada unit type code such as \code{"V11"}.
+The following activity types can be specified using an English
+activity name or a Kolada V-code:
+
+\tabular{ll}{
+\strong{Activity} \tab \strong{V-code} \cr
+Preschool \tab V11 \cr
+Compulsory school F-9 \tab V15 \cr
+Upper secondary school \tab V17 \cr
+Home care, elderly \tab V21 \cr
+Special housing, elderly \tab V23 \cr
+LSS housing with special services \tab V25 \cr
+LSS daily activity \tab V26 \cr
+LSS group home \tab V29 \cr
+LSS service home \tab V30 \cr
+Social Services housing support \tab V31 \cr
+Social Services housing with special services \tab V32 \cr
+Social Services employment \tab V34 \cr
+Domestic violence \tab V45 \cr
+Properties \tab V60
+}
+
+The \code{activity} argument can use either the English activity name,
+for example \code{activity = "preschool"}, or the V-code directly,
+for example \code{activity = "V11"}.
+
+English activity names accepted by the function include:
+
+\tabular{ll}{
+\strong{activity} \tab \strong{V-code} \cr
+preschool \tab V11 \cr
+compulsory_school \tab V15 \cr
+upper_secondary_school \tab V17 \cr
+home_care \tab V21 \cr
+special_housing_elderly \tab V23 \cr
+lss_special_service_housing \tab V25 \cr
+lss_daily_activity \tab V26 \cr
+lss_group_home \tab V29 \cr
+lss_service_home \tab V30 \cr
+social_services_housing_support \tab V31 \cr
+social_services_special_housing \tab V32 \cr
+social_services_employment \tab V34 \cr
+domestic_violence \tab V45 \cr
+properties \tab V60
+}
 }
 \examples{
 \dontrun{
-
+# Get all preschools in Haninge
 get_units(
   activity = "preschool",
   municipality = "Haninge"
 )
 
+# The same query using a V-code and municipality code
 get_units(
   activity = "V11",
   municipality = "0136"
 )
 
+# Get KPI values for the units
 get_units(
   activity = "preschool",
   municipality = "Haninge",
   kpi = "N11808",
   year = 2025
 )
-
 }
 
 }
