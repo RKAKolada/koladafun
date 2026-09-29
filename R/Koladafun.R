@@ -2263,6 +2263,7 @@ hamta_enheter <- function(
     "fastigheter" = "V60"
   )
 
+
   # ---------------------------------------------------------
   # Matcha verksamhet
   # ---------------------------------------------------------
@@ -2294,6 +2295,7 @@ hamta_enheter <- function(
         !verksamhet_lower %in%
         names(verksamhetskoder)
       ) {
+
         stop(
           "Okänd verksamhet: ",
           verksamhet,
@@ -2336,6 +2338,7 @@ hamta_enheter <- function(
     ]
 
     if (nrow(traff) == 0) {
+
       stop(
         "Hittar ingen kommun med namn eller kod: ",
         kommun
@@ -2343,6 +2346,7 @@ hamta_enheter <- function(
     }
 
     if (nrow(traff) > 1) {
+
       stop(
         "Flera kommuner matchade: ",
         kommun,
@@ -2355,7 +2359,7 @@ hamta_enheter <- function(
 
 
   # ---------------------------------------------------------
-  # Bygg URL för enheter
+  # Hämta enhetsregistret
   # ---------------------------------------------------------
 
   url <- "https://api.kolada.se/v3/ou"
@@ -2398,11 +2402,6 @@ hamta_enheter <- function(
       )
     )
   }
-
-
-  # ---------------------------------------------------------
-  # Hämta enheter
-  # ---------------------------------------------------------
 
   enheter <- .hamta_alla_sidor(
     url
@@ -2527,12 +2526,17 @@ hamta_enheter <- function(
 
 
   # ---------------------------------------------------------
-  # Kontrollera nyckeltal och kön
+  # Kontrollera nyckeltal
   # ---------------------------------------------------------
 
   nyckeltal <- as.character(
     nyckeltal
   )
+
+
+  # ---------------------------------------------------------
+  # Kontrollera kön
+  # ---------------------------------------------------------
 
   if (!is.null(kon)) {
 
@@ -2564,80 +2568,31 @@ hamta_enheter <- function(
 
 
   # ---------------------------------------------------------
-  # Dela enheter i batchar
+  # Om år har angetts:
+  # hämta direkt på KPI + år
+  #
+  # Detta är mycket snabbare än att fråga varje enhets-ID.
   # ---------------------------------------------------------
 
-  enhets_batchar <- split(
-    enheter$unit_id,
-    ceiling(
-      seq_along(
-        enheter$unit_id
-      ) / batch_size
-    )
-  )
-
-
-  # ---------------------------------------------------------
-  # Dela år i batchar
-  # ---------------------------------------------------------
-
-  if (is.null(ar)) {
-
-    ar_batchar <- list(
-      NULL
-    )
-
-  } else {
+  if (!is.null(ar)) {
 
     ar <- as.character(
       ar
     )
 
-    ar_batchar <- split(
-      ar,
-      ceiling(
-        seq_along(ar) / 20
-      )
-    )
-  }
+    resultat <- list()
+    index <- 1
 
+    for (kpi_id in nyckeltal) {
 
-  # ---------------------------------------------------------
-  # Hämta nyckeltalsdata på enhetsnivå
-  # ---------------------------------------------------------
-
-  resultat <- list()
-  index <- 1
-
-  for (kpi_id in nyckeltal) {
-
-    for (enhets_batch in enhets_batchar) {
-
-      enhets_del <- paste(
-        enhets_batch,
-        collapse = ","
-      )
-
-      for (ar_batch in ar_batchar) {
+      for (ar_id in ar) {
 
         url_data <- paste0(
           "https://api.kolada.se/v3/oudata/kpi/",
           kpi_id,
-          "/ou/",
-          enhets_del
+          "/year/",
+          ar_id
         )
-
-        if (!is.null(ar_batch)) {
-
-          url_data <- paste0(
-            url_data,
-            "/year/",
-            paste(
-              ar_batch,
-              collapse = ","
-            )
-          )
-        }
 
         svar <- tryCatch(
           .hamta_alla_sidor(
@@ -2655,11 +2610,78 @@ hamta_enheter <- function(
           next
         }
 
-        # API-resultatet kan innehålla nästlade values
         if ("values" %in% names(svar)) {
 
           svar <- svar |>
-            tidyr::unnest(values)
+            tidyr::unnest(
+              values
+            )
+        }
+
+        resultat[[index]] <- svar
+
+        index <- index + 1
+      }
+    }
+
+
+    # ---------------------------------------------------------
+    # Om år INTE har angetts:
+    # använd tidigare batchmetod för att hämta alla år.
+    # ---------------------------------------------------------
+
+  } else {
+
+    enhets_batchar <- split(
+      enheter$unit_id,
+      ceiling(
+        seq_along(
+          enheter$unit_id
+        ) / batch_size
+      )
+    )
+
+    resultat <- list()
+    index <- 1
+
+    for (kpi_id in nyckeltal) {
+
+      for (enhets_batch in enhets_batchar) {
+
+        enhets_del <- paste(
+          enhets_batch,
+          collapse = ","
+        )
+
+        url_data <- paste0(
+          "https://api.kolada.se/v3/oudata/kpi/",
+          kpi_id,
+          "/ou/",
+          enhets_del
+        )
+
+        svar <- tryCatch(
+          .hamta_alla_sidor(
+            url_data
+          ),
+          error = function(e) {
+            NULL
+          }
+        )
+
+        if (
+          is.null(svar) ||
+          nrow(svar) == 0
+        ) {
+          next
+        }
+
+        if ("values" %in% names(svar)) {
+
+          svar <- svar |>
+            tidyr::unnest(
+              values
+            )
         }
 
         resultat[[index]] <- svar
@@ -2681,13 +2703,11 @@ hamta_enheter <- function(
   if (nrow(enhetsdata) == 0) {
 
     message(
-      "Inga nyckeltalsvärden hittades för de valda enheterna."
+      "Inga nyckeltalsvärden hittades för de valda kriterierna."
     )
 
-    rownames(enheter) <- NULL
-
     return(
-      as.data.frame(enheter)
+      data.frame()
     )
   }
 
@@ -2702,6 +2722,17 @@ hamta_enheter <- function(
       dplyr::filter(
         gender %in% kon
       )
+  }
+
+  if (nrow(enhetsdata) == 0) {
+
+    message(
+      "Inga nyckeltalsvärden hittades för valt kön."
+    )
+
+    return(
+      data.frame()
+    )
   }
 
 
@@ -2775,10 +2806,13 @@ hamta_enheter <- function(
 
   # ---------------------------------------------------------
   # Lägg ihop enhetsinformation och nyckeltalsvärden
+  #
+  # inner_join innebär att endast enheter som faktiskt
+  # har det valda nyckeltalet inkluderas.
   # ---------------------------------------------------------
 
   enheter <- enheter |>
-    dplyr::left_join(
+    dplyr::inner_join(
       enhetsdata |>
         dplyr::select(
           unit_id,
