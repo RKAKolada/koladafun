@@ -1388,7 +1388,8 @@ forandring <- function(
 #' jämförelsegrupp.
 #'
 #' Jämförelsen kan göras mot kommunerna i samma län, kommunens
-#' SKR-kommungrupp eller någon av Koladas grupper för liknande kommuner.
+#' SKR-kommungrupp, en grupp utifrån invånarantal eller någon av
+#' Koladas grupper för liknande kommuner.
 #'
 #' @param nyckeltal Ett eller flera nyckeltals-ID från Kolada.
 #'
@@ -1403,12 +1404,14 @@ forandring <- function(
 #' @param jamforelse Typ av jämförelse.
 #'   `"lan"` = kommuner i samma län,
 #'   `"kommungrupp"` = kommunens SKR-kommungrupp,
-#'   `"liknande"` = liknande kommuner.
+#'   `"liknande"` = liknande kommuner,
+#'   `"invånarantal"` = kommuner i samma befolkningsgrupp.
 #'   Standard är `"lan"`.
 #'
-#' @param verksamhet Valfritt. Används när `jamforelse = "liknande"`.
-#'   Exempelvis `"förskola"`, `"grundskola"` eller `"äldreomsorg"`.
-#'   Om NULL visas en meny med tillgängliga grupper i Console.
+#' @param verksamhet Valfritt. Om `verksamhet` anges används automatiskt
+#'   `jamforelse = "liknande"`. Exempelvis `"förskola"`, `"grundskola"`
+#'   eller `"äldreomsorg"`. Om NULL och `jamforelse = "liknande"` visas
+#'   en meny med tillgängliga grupper i Console.
 #'
 #' @param inkludera_grupp Logiskt värde. Om `TRUE` inkluderas även
 #'   jämförelsegruppens ovägda medel. Standard är `TRUE`.
@@ -1436,6 +1439,13 @@ forandring <- function(
 #'   nyckeltal = "N01926",
 #'   kommun = "Ludvika",
 #'   ar = 2025,
+#'   jamforelse = "invånarantal"
+#' )
+#'
+#' hamta_jamforelse(
+#'   nyckeltal = "N01926",
+#'   kommun = "Ludvika",
+#'   ar = 2025,
 #'   jamforelse = "liknande"
 #' )
 #'
@@ -1443,7 +1453,6 @@ forandring <- function(
 #'   nyckeltal = "N01926",
 #'   kommun = "Ludvika",
 #'   ar = 2025,
-#'   jamforelse = "liknande",
 #'   verksamhet = "förskola"
 #' )
 #'
@@ -1484,6 +1493,12 @@ hamta_jamforelse <- function(
     stop("'inkludera_grupp' måste vara TRUE eller FALSE.")
   }
 
+  # Om verksamhet anges är jämförelsen per definition
+  # en jämförelse med liknande kommuner.
+  if (!is.null(verksamhet)) {
+    jamforelse <- "liknande"
+  }
+
   jamforelse <- tolower(
     as.character(jamforelse)
   )
@@ -1491,12 +1506,14 @@ hamta_jamforelse <- function(
   giltiga_jamforelser <- c(
     "lan",
     "kommungrupp",
-    "liknande"
+    "liknande",
+    "invånarantal"
   )
 
   if (!jamforelse %in% giltiga_jamforelser) {
     stop(
-      "Ogiltig jämförelse. Använd 'lan', 'kommungrupp' eller 'liknande'."
+      "Ogiltig jämförelse. Använd 'lan', 'kommungrupp', ",
+      "'liknande' eller 'invånarantal'."
     )
   }
 
@@ -1670,6 +1687,43 @@ hamta_jamforelse <- function(
 
     jamforelse_namn <- "Övrig kommun i kommungruppen"
     grupp_typ_namn <- "Kommungruppen"
+  }
+
+
+  # ---------------------------------------------------------
+  # Invånarantal
+  # ---------------------------------------------------------
+
+  if (jamforelse == "invånarantal") {
+
+    vald_grupp <- kommun_grupper[
+      grepl(
+        "^Kommuner med .*invånare.*\\(ovägt medel\\)$",
+        kommun_grupper$title,
+        ignore.case = TRUE
+      ),
+      ,
+      drop = FALSE
+    ]
+
+    if (nrow(vald_grupp) == 0) {
+      stop(
+        "Kunde inte hitta någon jämförelsegrupp efter invånarantal för ",
+        kommun_namn,
+        "."
+      )
+    }
+
+    if (nrow(vald_grupp) > 1) {
+      stop(
+        "Flera jämförelsegrupper efter invånarantal hittades för ",
+        kommun_namn,
+        "."
+      )
+    }
+
+    jamforelse_namn <- "Övrig kommun i invånargruppen"
+    grupp_typ_namn <- "Invånargruppen"
   }
 
 
@@ -3113,8 +3167,8 @@ change <- function(
 #' English wrapper for [hamta_jamforelse()].
 #'
 #' A municipality can be compared with municipalities in the same
-#' county, the same SKR municipality group, or a group of similar
-#' municipalities.
+#' county, the same SKR municipality group, the same population group,
+#' or a group of similar municipalities.
 #'
 #' @param kpi One or more Kolada KPI IDs.
 #' @param municipality Municipality name or code.
@@ -3122,11 +3176,13 @@ change <- function(
 #' @param gender Optional gender filter:
 #'   `"T"` = total, `"K"` = women and `"M"` = men.
 #' @param comparison Comparison type:
-#'   `"county"`, `"municipality_group"` or `"similar"`.
+#'   `"county"`, `"municipality_group"`, `"population"` or `"similar"`.
 #'   Default is `"county"`.
-#' @param area Optional service area when `comparison = "similar"`.
+#' @param area Optional service area. If `area` is specified,
+#'   `comparison = "similar"` is used automatically.
 #'   Examples include `"preschool"`, `"compulsory_school"` and
-#'   `"elderly_care"`. If omitted, an interactive menu is shown.
+#'   `"elderly_care"`. If omitted and `comparison = "similar"`,
+#'   an interactive menu is shown.
 #' @param include_group Logical. If `TRUE`, the group value is included.
 #'   Default is `TRUE`.
 #'
@@ -3153,6 +3209,14 @@ change <- function(
 #'   comparison = "municipality_group"
 #' )
 #'
+#' # Compare with municipalities in the same population group
+#' get_comparison(
+#'   kpi = "N01926",
+#'   municipality = "Ludvika",
+#'   year = 2025,
+#'   comparison = "population"
+#' )
+#'
 #' # Compare with similar municipalities using the interactive menu
 #' get_comparison(
 #'   kpi = "N01926",
@@ -3166,7 +3230,6 @@ change <- function(
 #'   kpi = "N01926",
 #'   municipality = "Ludvika",
 #'   year = 2025,
-#'   comparison = "similar",
 #'   area = "preschool"
 #' )
 #'
@@ -3197,12 +3260,17 @@ get_comparison <- function(
     "municipality group" = "kommungrupp",
     "kommungrupp" = "kommungrupp",
 
+    "population" = "invånarantal",
+    "population_group" = "invånarantal",
+    "population group" = "invånarantal",
+    "invånarantal" = "invånarantal",
+
     "similar" = "liknande",
     "liknande" = "liknande",
 
     stop(
-      "Invalid comparison. Use 'county', ",
-      "'municipality_group' or 'similar'."
+      "Invalid comparison. Use 'county', 'municipality_group', ",
+      "'population' or 'similar'."
     )
   )
 
@@ -3212,6 +3280,10 @@ get_comparison <- function(
   # ---------------------------------------------------------
 
   if (!is.null(area)) {
+
+    # If a service area is specified, the comparison is
+    # automatically a similar-municipalities comparison.
+    comparison_sv <- "liknande"
 
     area_lower <- tolower(area)
 
@@ -3292,6 +3364,9 @@ get_comparison <- function(
         comparison_type == "Kommungruppen" ~ "Municipality group",
         comparison_type == "Liknande kommun" ~ "Similar municipality",
         comparison_type == "Liknande kommuner" ~ "Similar municipalities",
+        comparison_type == "Övrig kommun i invånargruppen" ~
+          "Other municipality in population group",
+        comparison_type == "Invånargruppen" ~ "Population group",
         TRUE ~ as.character(comparison_type)
       )
     )

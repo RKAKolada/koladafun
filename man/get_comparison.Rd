@@ -25,12 +25,14 @@ get_comparison(
 \code{"T"} = total, \code{"K"} = women and \code{"M"} = men.}
 
 \item{comparison}{Comparison type:
-\code{"county"}, \code{"municipality_group"} or \code{"similar"}.
+\code{"county"}, \code{"municipality_group"}, \code{"population"} or \code{"similar"}.
 Default is \code{"county"}.}
 
-\item{area}{Optional service area when \code{comparison = "similar"}.
+\item{area}{Optional service area. If \code{area} is specified,
+\code{comparison = "similar"} is used automatically.
 Examples include \code{"preschool"}, \code{"compulsory_school"} and
-\code{"elderly_care"}. If omitted, an interactive menu is shown.}
+\code{"elderly_care"}. If omitted and \code{comparison = "similar"},
+an interactive menu is shown.}
 
 \item{include_group}{Logical. If \code{TRUE}, the group value is included.
 Default is \code{TRUE}.}
@@ -45,8 +47,8 @@ English wrapper for \code{\link[=hamta_jamforelse]{hamta_jamforelse()}}.
 }
 \details{
 A municipality can be compared with municipalities in the same
-county, the same SKR municipality group, or a group of similar
-municipalities.
+county, the same SKR municipality group, the same population group,
+or a group of similar municipalities.
 }
 \examples{
 \dontrun{
@@ -67,6 +69,14 @@ get_comparison(
   comparison = "municipality_group"
 )
 
+# Compare with municipalities in the same population group
+get_comparison(
+  kpi = "N01926",
+  municipality = "Ludvika",
+  year = 2025,
+  comparison = "population"
+)
+
 # Compare with similar municipalities using the interactive menu
 get_comparison(
   kpi = "N01926",
@@ -80,7 +90,6 @@ get_comparison(
   kpi = "N01926",
   municipality = "Ludvika",
   year = 2025,
-  comparison = "similar",
   area = "preschool"
 )
 

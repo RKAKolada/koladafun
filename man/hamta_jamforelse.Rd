@@ -28,12 +28,14 @@ exempelvis \code{"2085"} eller \code{"Ludvika"}.}
 \item{jamforelse}{Typ av jämförelse.
 \code{"lan"} = kommuner i samma län,
 \code{"kommungrupp"} = kommunens SKR-kommungrupp,
-\code{"liknande"} = liknande kommuner.
+\code{"liknande"} = liknande kommuner,
+\code{"invånarantal"} = kommuner i samma befolkningsgrupp.
 Standard är \code{"lan"}.}
 
-\item{verksamhet}{Valfritt. Används när \code{jamforelse = "liknande"}.
-Exempelvis \code{"förskola"}, \code{"grundskola"} eller \code{"äldreomsorg"}.
-Om NULL visas en meny med tillgängliga grupper i Console.}
+\item{verksamhet}{Valfritt. Om \code{verksamhet} anges används automatiskt
+\code{jamforelse = "liknande"}. Exempelvis \code{"förskola"}, \code{"grundskola"}
+eller \code{"äldreomsorg"}. Om NULL och \code{jamforelse = "liknande"} visas
+en meny med tillgängliga grupper i Console.}
 
 \item{inkludera_grupp}{Logiskt värde. Om \code{TRUE} inkluderas även
 jämförelsegruppens ovägda medel. Standard är \code{TRUE}.}
@@ -48,7 +50,8 @@ jämförelsegrupp.
 }
 \details{
 Jämförelsen kan göras mot kommunerna i samma län, kommunens
-SKR-kommungrupp eller någon av Koladas grupper för liknande kommuner.
+SKR-kommungrupp, en grupp utifrån invånarantal eller någon av
+Koladas grupper för liknande kommuner.
 }
 \examples{
 \dontrun{
@@ -70,6 +73,13 @@ hamta_jamforelse(
   nyckeltal = "N01926",
   kommun = "Ludvika",
   ar = 2025,
+  jamforelse = "invånarantal"
+)
+
+hamta_jamforelse(
+  nyckeltal = "N01926",
+  kommun = "Ludvika",
+  ar = 2025,
   jamforelse = "liknande"
 )
 
@@ -77,7 +87,6 @@ hamta_jamforelse(
   nyckeltal = "N01926",
   kommun = "Ludvika",
   ar = 2025,
-  jamforelse = "liknande",
   verksamhet = "förskola"
 )
 

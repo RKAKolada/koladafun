@@ -490,6 +490,7 @@ Det går att välja mellan:
 
 - kommuner i samma län
 - SKR:s kommungruppsindelning
+- kommuner i samma grupp utifrån invånarantal
 - liknande kommuner inom olika verksamhetsområden
 
 Som standard används kommunerna i samma län.
@@ -539,6 +540,25 @@ hamta_jamforelse(
 
 Funktionen identifierar automatiskt vilken kommungrupp den valda kommunen tillhör och hämtar den valda kommunen, övriga kommuner i kommungruppen samt gruppvärdet.
 
+### Jämför med kommuner utifrån invånarantal
+
+Med `jamforelse = "invånarantal"` jämförs kommunen med kommuner som tillhör
+samma befolkningsgrupp i Kolada.
+
+```r
+hamta_jamforelse(
+  nyckeltal = "N01926",
+  kommun = "Ludvika",
+  ar = 2025,
+  kon = "T",
+  jamforelse = "invånarantal"
+)
+```
+
+Funktionen identifierar automatiskt vilken befolkningsgrupp den valda kommunen tillhör och hämtar den valda kommunen, övriga kommuner i samma grupp samt gruppvärdet.
+
+Grupperna baseras på invånarantal, exempelvis Kommuner med 10 000 - 14 999 invånare (ovägt medel).
+
 ### Jämför med liknande kommuner
 
 Med `jamforelse = "liknande"` kan kommunen jämföras med liknande kommuner inom olika verksamhetsområden.
@@ -578,7 +598,7 @@ Ange numret för den jämförelsegrupp som ska användas. Om exempelvis `4` ange
 
 De grupper som visas hämtas från Kolada och kan därför skilja sig mellan kommuner och förändras när gruppindelningarna uppdateras.
 
-Det går också att ange verksamheten direkt och därmed hoppa över valet i Console:
+Det går också att ange verksamheten direkt. När verksamhet anges används automatiskt jämförelsen "liknande", och valet i Console hoppas över.
 
 ```r
 hamta_jamforelse(
@@ -586,7 +606,6 @@ hamta_jamforelse(
   kommun = "Ludvika",
   ar = 2025,
   kon = "T",
-  jamforelse = "liknande",
   verksamhet = "förskola"
 )
 ```
@@ -800,7 +819,7 @@ Alla huvudfunktioner finns med både svenska och engelska funktionsnamn.
 | `tillgangliga_ar()` | `available_years()` | Visar vilka år som har tillgängliga data för ett nyckeltal. |
 | `senaste_varde()` | `latest_value()` | Hämtar den senaste tillgängliga observationen. |
 | `forandring()` | `change()` | Beräknar absolut och procentuell förändring mellan två år. |
-| `hamta_jamforelse()` | `get_comparison()` | Jämför en kommun med kommuner i samma län, SKR-kommungrupp eller grupper av liknande kommuner. |
+| `hamta_jamforelse()` | `get_comparison()` | Jämför en kommun med kommuner i samma län, SKR-kommungrupp, befolkningsgrupp eller grupper av liknande kommuner. |
 | `hamta_enheter()` | `get_units()` | Hämtar organisatoriska enheter och, valfritt, nyckeltalsdata på enhetsnivå. |
 
 Dokumentation för de svenska funktionerna finns även direkt i R:
@@ -1272,7 +1291,7 @@ More information:
 | `available_years()` | Shows which years have available data for a KPI. |
 | `latest_value()` | Retrieves the latest available observation. |
 | `change()` | Calculates absolute and percentage change between two years. |
-| `get_comparison()` | Compares a municipality with municipalities in the same county, SKR municipality group or groups of similar municipalities. |
+| `get_comparison()` | Compares a municipality with municipalities in the same county, SKR municipality group, population group or groups of similar municipalities. |
 | `get_units()` | Retrieves organizational units and, optionally, KPI data at unit level. |
 
 Documentation for the English functions is also available directly in R:
