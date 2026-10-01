@@ -241,30 +241,6 @@ Mer information:
 ?sok_nyckeltal
 ```
 
-### Visa information om ett nyckeltal
-
-Med `info_nyckeltal()` kan metadata för ett eller flera nyckeltal hämtas.
-
-```r
-info_nyckeltal("N01926")
-```
-
-Flera nyckeltal kan anges samtidigt:
-
-```r
-info_nyckeltal(
-  c("N01926", "N17454")
-)
-```
-
-Funktionen returnerar den metadata som finns tillgänglig för nyckeltalen i Kolada, exempelvis namn och beskrivning.
-
-Mer information:
-
-```r
-?info_nyckeltal
-```
-
 ### Hämta kommuner och regioner
 
 Med `hamta_kommuner()` kan en lista över kommuner och regioner hämtas.
@@ -780,16 +756,13 @@ Ett vanligt arbetsflöde kan vara att först söka efter ett nyckeltal, läsa de
 # 1. Sök efter ett nyckeltal
 sok_nyckeltal("kostnad förskola")
 
-# 2. Läs mer om nyckeltalet
-info_nyckeltal("N11005")
-
-# 3. Kontrollera vilka år som finns
+# 2. Kontrollera vilka år som finns
 tillgangliga_ar(
   "N11005",
   kommun = "Haninge"
 )
 
-# 4. Hämta data
+# 3. Hämta data
 data <- hamta_fran_kolada(
   nyckeltal = "N11005",
   kommun = "Haninge",
@@ -814,7 +787,6 @@ Alla huvudfunktioner finns med både svenska och engelska funktionsnamn.
 |---|---|---|
 | `hamta_fran_kolada()` | `get_from_kolada()` | Hämtar data från Kolada för valda nyckeltal, områden och år. |
 | `sok_nyckeltal()` | `search_kpi()` | Söker efter nyckeltal utifrån ord, namn, beskrivning eller ID. |
-| `info_nyckeltal()` | `kpi_info()` | Hämtar metadata för ett eller flera nyckeltal. |
 | `hamta_kommuner()` | `get_municipalities()` | Hämtar och söker bland kommuner och regioner. |
 | `tillgangliga_ar()` | `available_years()` | Visar vilka år som har tillgängliga data för ett nyckeltal. |
 | `senaste_varde()` | `latest_value()` | Hämtar den senaste tillgängliga observationen. |
@@ -828,7 +800,6 @@ Dokumentation för de svenska funktionerna finns även direkt i R:
 # Svenska
 ?hamta_fran_kolada
 ?sok_nyckeltal
-?info_nyckeltal
 ?hamta_kommuner
 ?tillgangliga_ar
 ?senaste_varde
@@ -847,7 +818,6 @@ The English functions provide the same functionality as the Swedish functions, b
 |---|---|
 | `hamta_fran_kolada()` | `get_from_kolada()` |
 | `sok_nyckeltal()` | `search_kpi()` |
-| `info_nyckeltal()` | `kpi_info()` |
 | `hamta_kommuner()` | `get_municipalities()` |
 | `tillgangliga_ar()` | `available_years()` |
 | `senaste_varde()` | `latest_value()` |
@@ -929,28 +899,6 @@ More information:
 
 ```r
 ?search_kpi
-```
-
-### Get KPI information
-
-Use `kpi_info()` to retrieve metadata for one or more KPIs:
-
-```r
-kpi_info("N01926")
-```
-
-Multiple KPIs can be specified:
-
-```r
-kpi_info(
-  c("N01926", "N17454")
-)
-```
-
-More information:
-
-```r
-?kpi_info
 ```
 
 ### Get municipalities and regions
@@ -1286,7 +1234,6 @@ More information:
 |---|---|
 | `get_from_kolada()` | Retrieves data from Kolada for selected KPIs, areas and years. |
 | `search_kpi()` | Searches for KPIs by keyword, name, description or ID. |
-| `kpi_info()` | Retrieves metadata for one or more KPIs. |
 | `get_municipalities()` | Retrieves and searches municipalities and regions. |
 | `available_years()` | Shows which years have available data for a KPI. |
 | `latest_value()` | Retrieves the latest available observation. |
@@ -1300,7 +1247,6 @@ Documentation for the English functions is also available directly in R:
 # English
 ?get_from_kolada
 ?search_kpi
-?kpi_info
 ?get_municipalities
 ?available_years
 ?latest_value

@@ -742,13 +742,35 @@ sok_nyckeltal <- function(
     max_resultat = 50
 ) {
 
+  # ---------------------------------------------------------
+  # Kontrollera argument
+  # ---------------------------------------------------------
+
   if (
     missing(sok) ||
-    length(sok) == 0 ||
-    !nzchar(trimws(sok))
+    length(sok) == 0
   ) {
-    stop("Du måste ange ett sökord.")
+    stop("Du måste ange minst ett sökord eller nyckeltals-ID.")
   }
+
+  sok <- as.character(
+    sok
+  )
+
+  sok <- trimws(
+    sok
+  )
+
+  if (any(!nzchar(sok))) {
+    stop(
+      "Sökningen får inte innehålla tomma värden."
+    )
+  }
+
+
+  # ---------------------------------------------------------
+  # Hämta nyckeltalsmetadata
+  # ---------------------------------------------------------
 
   nyckeltal <- .cache_get(
     "alla_nyckeltal"
@@ -766,6 +788,11 @@ sok_nyckeltal <- function(
     )
   }
 
+
+  # ---------------------------------------------------------
+  # Kolumner som ska användas i sökningen
+  # ---------------------------------------------------------
+
   sokkolumner <- intersect(
     c(
       "id",
@@ -775,37 +802,89 @@ sok_nyckeltal <- function(
     names(nyckeltal)
   )
 
+
+  # ---------------------------------------------------------
+  # Skapa söktext för varje nyckeltal
+  # ---------------------------------------------------------
+
   soktext <- apply(
-    nyckeltal[, sokkolumner, drop = FALSE],
+    nyckeltal[
+      ,
+      sokkolumner,
+      drop = FALSE
+    ],
     1,
     function(x) {
+
       paste(
-        ifelse(is.na(x), "", x),
+        ifelse(
+          is.na(x),
+          "",
+          x
+        ),
         collapse = " "
       )
     }
   )
 
-  soktext <- tolower(soktext)
+  soktext <- tolower(
+    soktext
+  )
 
-  sokord <- strsplit(
-    tolower(trimws(sok)),
-    "\\s+"
-  )[[1]]
+
+  # ---------------------------------------------------------
+  # Gör en separat sökning för varje värde i sok
+  #
+  # Exempel:
+  # "kostnad förskola"
+  #   -> kostnad OCH förskola
+  #
+  # c("förskola", "gymnasieskola")
+  #   -> förskola ELLER gymnasieskola
+  # ---------------------------------------------------------
+
+  traff_lista <- lapply(
+    sok,
+    function(sokfras) {
+
+      sokord <- strsplit(
+        tolower(
+          trimws(sokfras)
+        ),
+        "\\s+"
+      )[[1]]
+
+      Reduce(
+        `&`,
+        lapply(
+          sokord,
+          function(ord) {
+
+            grepl(
+              ord,
+              soktext,
+              fixed = TRUE
+            )
+          }
+        )
+      )
+    }
+  )
+
+
+  # ---------------------------------------------------------
+  # Slå ihop sökningarna med ELLER
+  # ---------------------------------------------------------
 
   traff <- Reduce(
-    `&`,
-    lapply(
-      sokord,
-      function(ord) {
-        grepl(
-          ord,
-          soktext,
-          fixed = TRUE
-        )
-      }
-    )
+    `|`,
+    traff_lista
   )
+
+
+  # ---------------------------------------------------------
+  # Skapa resultat
+  # ---------------------------------------------------------
 
   resultat <- nyckeltal[
     traff,
@@ -813,7 +892,11 @@ sok_nyckeltal <- function(
     drop = FALSE
   ]
 
+
+  # ---------------------------------------------------------
   # Lägg de viktigaste kolumnerna först
+  # ---------------------------------------------------------
+
   forst <- intersect(
     c(
       "id",
@@ -826,83 +909,22 @@ sok_nyckeltal <- function(
   resultat <- resultat[
     c(
       forst,
-      setdiff(names(resultat), forst)
+      setdiff(
+        names(resultat),
+        forst
+      )
     )
   ]
+
+
+  # ---------------------------------------------------------
+  # Begränsa antal resultat
+  # ---------------------------------------------------------
 
   resultat <- head(
     resultat,
     max_resultat
   )
-
-  rownames(resultat) <- NULL
-
-  resultat
-}
-
-#' Visa information om nyckeltal
-#'
-#' Hämtar metadata för ett eller flera nyckeltal från Kolada.
-#'
-#' @param nyckeltal Ett eller flera nyckeltals-ID,
-#'   exempelvis `"N01926"` eller
-#'   `c("N01926", "N17454")`.
-#'
-#' @return En data.frame med metadata om nyckeltalen.
-#'
-#' @examples
-#' \dontrun{
-#' info_nyckeltal("N01926")
-#'
-#' info_nyckeltal(
-#'   c("N01926", "N17454")
-#' )
-#' }
-#'
-#' @export
-info_nyckeltal <- function(nyckeltal) {
-
-  if (
-    missing(nyckeltal) ||
-    length(nyckeltal) == 0
-  ) {
-    stop("Du måste ange minst ett nyckeltal.")
-  }
-
-  nyckeltal <- as.character(
-    nyckeltal
-  )
-
-  resultat <- lapply(
-    nyckeltal,
-    function(kpi_id) {
-
-      .hamta_kpi_metadata(
-        kpi_id
-      )
-    }
-  )
-
-  resultat <- dplyr::bind_rows(
-    resultat
-  )
-
-  # Lägg viktig information först
-  forst <- intersect(
-    c(
-      "id",
-      "title",
-      "description"
-    ),
-    names(resultat)
-  )
-
-  resultat <- resultat[
-    c(
-      forst,
-      setdiff(names(resultat), forst)
-    )
-  ]
 
   rownames(resultat) <- NULL
 
@@ -2980,30 +3002,6 @@ search_kpi <- function(
   )
 }
 
-
-#' Get information about KPIs
-#'
-#' English wrapper for [info_nyckeltal()].
-#'
-#' @param kpi One or more Kolada KPI IDs.
-#'
-#' @return A data.frame with KPI metadata.
-#'
-#' @examples
-#' \dontrun{
-#' kpi_info("N01926")
-#' kpi_info(c("N01926", "N17454"))
-#' }
-#'
-#' @export
-kpi_info <- function(kpi) {
-
-  info_nyckeltal(
-    nyckeltal = kpi
-  )
-}
-
-
 #' Get municipalities and regions
 #'
 #' English wrapper for [hamta_kommuner()].
@@ -3709,7 +3707,6 @@ get_units <- function(
 #'
 #' * [hamta_fran_kolada()] - Hämta data från Kolada.
 #' * [sok_nyckeltal()] - Sök efter nyckeltal.
-#' * [info_nyckeltal()] - Visa information om nyckeltal.
 #' * [hamta_kommuner()] - Hämta kommuner och regioner.
 #' * [tillgangliga_ar()] - Visa tillgängliga år.
 #' * [senaste_varde()] - Hämta senaste tillgängliga värde.
@@ -3721,7 +3718,6 @@ get_units <- function(
 #'
 #' * [get_from_kolada()] - Get data from Kolada.
 #' * [search_kpi()] - Search for KPIs.
-#' * [kpi_info()] - Get KPI metadata.
 #' * [get_municipalities()] - Get municipalities and regions.
 #' * [available_years()] - Get available years.
 #' * [latest_value()] - Get the latest available value.

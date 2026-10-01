@@ -17,7 +17,6 @@ Paketet kan användas med både svenska och engelska funktionsnamn.
 \itemize{
 \item \code{\link[=hamta_fran_kolada]{hamta_fran_kolada()}} - Hämta data från Kolada.
 \item \code{\link[=sok_nyckeltal]{sok_nyckeltal()}} - Sök efter nyckeltal.
-\item \code{\link[=info_nyckeltal]{info_nyckeltal()}} - Visa information om nyckeltal.
 \item \code{\link[=hamta_kommuner]{hamta_kommuner()}} - Hämta kommuner och regioner.
 \item \code{\link[=tillgangliga_ar]{tillgangliga_ar()}} - Visa tillgängliga år.
 \item \code{\link[=senaste_varde]{senaste_varde()}} - Hämta senaste tillgängliga värde.
@@ -32,7 +31,6 @@ Paketet kan användas med både svenska och engelska funktionsnamn.
 \itemize{
 \item \code{\link[=get_from_kolada]{get_from_kolada()}} - Get data from Kolada.
 \item \code{\link[=search_kpi]{search_kpi()}} - Search for KPIs.
-\item \code{\link[=kpi_info]{kpi_info()}} - Get KPI metadata.
 \item \code{\link[=get_municipalities]{get_municipalities()}} - Get municipalities and regions.
 \item \code{\link[=available_years]{available_years()}} - Get available years.
 \item \code{\link[=latest_value]{latest_value()}} - Get the latest available value.
