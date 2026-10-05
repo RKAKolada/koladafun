@@ -2552,6 +2552,21 @@ hamta_enheter <- function(
     ]
   )
 
+  # Filtrera bort enhetstyper som inte längre används
+  enheter <- enheter[
+    !is.na(enheter$unit_type_name),
+    ,
+    drop = FALSE
+  ]
+
+  if (nrow(enheter) == 0) {
+    message(
+      "Inga aktuella enheter hittades för de valda kriterierna."
+    )
+    return(
+      data.frame()
+    )
+  }
 
   # ---------------------------------------------------------
   # Lägg till kommunnamn
