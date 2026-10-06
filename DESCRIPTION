@@ -1,6 +1,8 @@
 Package: koladafun
 Title: Funktioner för Koladata
 Version: 0.0.1
+Depends:
+    R (>= 4.1.0)
 Authors@R: 
     person(
         given = "Nejdet",
