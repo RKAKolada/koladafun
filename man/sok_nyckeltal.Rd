@@ -4,7 +4,7 @@
 \alias{sok_nyckeltal}
 \title{Sök efter nyckeltal i Kolada}
 \usage{
-sok_nyckeltal(sok, max_resultat = 50)
+sok_nyckeltal(sok = NULL)
 }
 \arguments{
 \item{sok}{Ett eller flera sökord, exempelvis \code{"förskola"}

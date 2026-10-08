@@ -738,33 +738,32 @@ hamta_fran_kolada <- function(
 #'
 #' @export
 sok_nyckeltal <- function(
-    sok,
-    max_resultat = 50
+    sok = NULL
 ) {
 
   # ---------------------------------------------------------
   # Kontrollera argument
   # ---------------------------------------------------------
 
-  if (
-    missing(sok) ||
-    length(sok) == 0
-  ) {
-    stop("Du måste ange minst ett sökord eller nyckeltals-ID.")
-  }
+  if (!is.null(sok)) {
 
-  sok <- as.character(
-    sok
-  )
-
-  sok <- trimws(
-    sok
-  )
-
-  if (any(!nzchar(sok))) {
-    stop(
-      "Sökningen får inte innehålla tomma värden."
+    sok <- as.character(
+      sok
     )
+
+    sok <- trimws(
+      sok
+    )
+
+    if (
+      length(sok) == 0 ||
+      anyNA(sok) ||
+      any(!nzchar(sok))
+    ) {
+      stop(
+        "Sökningen får inte innehålla tomma värden."
+      )
+    }
   }
 
 
@@ -786,6 +785,42 @@ sok_nyckeltal <- function(
       "alla_nyckeltal",
       nyckeltal
     )
+  }
+
+
+  # ---------------------------------------------------------
+  # Kolumner som ska visas först
+  # ---------------------------------------------------------
+
+  forst <- intersect(
+    c(
+      "id",
+      "title",
+      "description"
+    ),
+    names(nyckeltal)
+  )
+
+  nyckeltal <- nyckeltal[
+    c(
+      forst,
+      setdiff(
+        names(nyckeltal),
+        forst
+      )
+    )
+  ]
+
+
+  # ---------------------------------------------------------
+  # Om inget sökord anges, returnera alla nyckeltal
+  # ---------------------------------------------------------
+
+  if (is.null(sok)) {
+
+    rownames(nyckeltal) <- NULL
+
+    return(nyckeltal)
   }
 
 
@@ -835,7 +870,6 @@ sok_nyckeltal <- function(
   # ---------------------------------------------------------
   # Gör en separat sökning för varje värde i sok
   #
-  # Exempel:
   # "kostnad förskola"
   #   -> kostnad OCH förskola
   #
@@ -848,9 +882,7 @@ sok_nyckeltal <- function(
     function(sokfras) {
 
       sokord <- strsplit(
-        tolower(
-          trimws(sokfras)
-        ),
+        tolower(sokfras),
         "\\s+"
       )[[1]]
 
@@ -891,40 +923,6 @@ sok_nyckeltal <- function(
     ,
     drop = FALSE
   ]
-
-
-  # ---------------------------------------------------------
-  # Lägg de viktigaste kolumnerna först
-  # ---------------------------------------------------------
-
-  forst <- intersect(
-    c(
-      "id",
-      "title",
-      "description"
-    ),
-    names(resultat)
-  )
-
-  resultat <- resultat[
-    c(
-      forst,
-      setdiff(
-        names(resultat),
-        forst
-      )
-    )
-  ]
-
-
-  # ---------------------------------------------------------
-  # Begränsa antal resultat
-  # ---------------------------------------------------------
-
-  resultat <- head(
-    resultat,
-    max_resultat
-  )
 
   rownames(resultat) <- NULL
 
