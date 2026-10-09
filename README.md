@@ -220,19 +220,15 @@ sok_nyckeltal("kostnad förskola")
 
 Sökningen görs bland annat i nyckeltalets ID, namn och beskrivning.
 
-Antalet träffar kan begränsas med `max_resultat`:
-
-```r
-sok_nyckeltal(
-  "förskola",
-  max_resultat = 20
-)
-```
-
-Det går också att söka direkt på ett nyckeltals-ID:
+Det går också att söka direkt på ett nyckeltals-ID(n):
 
 ```r
 sok_nyckeltal("N01926")
+```
+
+
+```r
+sok_nyckeltal(c("N01926","N01951"))
 ```
 
 Mer information:
@@ -884,15 +880,6 @@ Use `search_kpi()` to search for KPIs in Kolada:
 
 ```r
 search_kpi("preschool")
-```
-
-The maximum number of results can be specified with `max_results`:
-
-```r
-search_kpi(
-  "preschool",
-  max_results = 20
-)
 ```
 
 More information:

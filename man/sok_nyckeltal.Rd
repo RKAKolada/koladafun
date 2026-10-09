@@ -7,28 +7,27 @@
 sok_nyckeltal(sok = NULL)
 }
 \arguments{
-\item{sok}{Ett eller flera sökord, exempelvis \code{"förskola"}
-eller \code{"kostnad förskola"}.}
-
-\item{max_resultat}{Maximalt antal träffar som returneras.
-Standard är 50.}
+\item{sok}{Valfritt. Ett eller flera sökord eller
+nyckeltals-ID. Om NULL returneras alla nyckeltal.}
 }
 \value{
-En data.frame med matchande nyckeltal.
+En data.frame med nyckeltalsmetadata.
 }
 \description{
-Söker bland Koladas nyckeltal efter ett eller flera sökord.
-Sökningen görs i nyckeltals-ID, namn och beskrivning.
+Hämtar metadata för Koladas nyckeltal.
+Om inget sökord anges returneras samtliga nyckeltal.
 }
 \details{
-Om flera sökord anges måste samtliga sökord förekomma
-i nyckeltalets metadata.
+Sökningen görs i nyckeltals-ID, namn och beskrivning.
+Flera ord i samma sökfras kombineras med OCH.
+Flera sökfraser kombineras med ELLER.
 }
 \examples{
 \dontrun{
+sok_nyckeltal()
 sok_nyckeltal("förskola")
 sok_nyckeltal("kostnad förskola")
-sok_nyckeltal("N01926")
+sok_nyckeltal(c("N01926", "N17448"))
 }
 
 }

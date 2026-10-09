@@ -4,23 +4,28 @@
 \alias{search_kpi}
 \title{Search for KPIs in Kolada}
 \usage{
-search_kpi(query, max_results = 50)
+search_kpi(query = NULL)
 }
 \arguments{
-\item{query}{Search term or words.}
-
-\item{max_results}{Maximum number of results. Default is 50.}
+\item{query}{Optional search term, vector of search terms,
+or KPI IDs. If NULL, all KPIs are returned.}
 }
 \value{
-A data.frame with matching KPIs.
+A data.frame with KPI metadata.
 }
 \description{
 English wrapper for \code{\link[=sok_nyckeltal]{sok_nyckeltal()}}.
 }
+\details{
+Returns metadata for all KPIs if no query is specified.
+Multiple words within a query are combined with AND.
+Multiple queries are combined with OR.
+}
 \examples{
 \dontrun{
+search_kpi()
 search_kpi("preschool")
-search_kpi("N01926")
+search_kpi(c("N01926", "N17448"))
 }
 
 }

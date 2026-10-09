@@ -716,24 +716,24 @@ hamta_fran_kolada <- function(
 
 #' Sök efter nyckeltal i Kolada
 #'
-#' Söker bland Koladas nyckeltal efter ett eller flera sökord.
+#' Hämtar metadata för Koladas nyckeltal.
+#' Om inget sökord anges returneras samtliga nyckeltal.
+#'
 #' Sökningen görs i nyckeltals-ID, namn och beskrivning.
+#' Flera ord i samma sökfras kombineras med OCH.
+#' Flera sökfraser kombineras med ELLER.
 #'
-#' Om flera sökord anges måste samtliga sökord förekomma
-#' i nyckeltalets metadata.
+#' @param sok Valfritt. Ett eller flera sökord eller
+#'   nyckeltals-ID. Om NULL returneras alla nyckeltal.
 #'
-#' @param sok Ett eller flera sökord, exempelvis `"förskola"`
-#'   eller `"kostnad förskola"`.
-#' @param max_resultat Maximalt antal träffar som returneras.
-#'   Standard är 50.
-#'
-#' @return En data.frame med matchande nyckeltal.
+#' @return En data.frame med nyckeltalsmetadata.
 #'
 #' @examples
 #' \dontrun{
+#' sok_nyckeltal()
 #' sok_nyckeltal("förskola")
 #' sok_nyckeltal("kostnad förskola")
-#' sok_nyckeltal("N01926")
+#' sok_nyckeltal(c("N01926", "N17448"))
 #' }
 #'
 #' @export
@@ -2992,26 +2992,29 @@ get_from_kolada <- function(
 #'
 #' English wrapper for [sok_nyckeltal()].
 #'
-#' @param query Search term or words.
-#' @param max_results Maximum number of results. Default is 50.
+#' Returns metadata for all KPIs if no query is specified.
+#' Multiple words within a query are combined with AND.
+#' Multiple queries are combined with OR.
 #'
-#' @return A data.frame with matching KPIs.
+#' @param query Optional search term, vector of search terms,
+#'   or KPI IDs. If NULL, all KPIs are returned.
+#'
+#' @return A data.frame with KPI metadata.
 #'
 #' @examples
 #' \dontrun{
+#' search_kpi()
 #' search_kpi("preschool")
-#' search_kpi("N01926")
+#' search_kpi(c("N01926", "N17448"))
 #' }
 #'
 #' @export
 search_kpi <- function(
-    query,
-    max_results = 50
+    query = NULL
 ) {
 
   sok_nyckeltal(
-    sok = query,
-    max_resultat = max_results
+    sok = query
   )
 }
 
