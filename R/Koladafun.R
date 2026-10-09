@@ -74,9 +74,9 @@
   }
 
   stop(
-    "Kunde inte hämta data från Koladas API efter ",
+    "Kunde inte h\u00e4mta data fr\u00e5n Koladas API efter ",
     retries,
-    " försök.\n",
+    " f\u00f6rs\u00f6k.\n",
     "URL: ",
     url,
     if (!is.null(senaste_fel)) {
@@ -301,7 +301,7 @@ hamta_fran_kolada <- function(
 ) {
 
   if (missing(nyckeltal) || length(nyckeltal) == 0) {
-    stop("Du måste ange minst ett nyckeltal.")
+    stop("Du m\u00e5ste ange minst ett nyckeltal.")
   }
 
   nyckeltal <- as.character(nyckeltal)
@@ -324,7 +324,7 @@ hamta_fran_kolada <- function(
       stop(
         "Ogiltig kommuntyp: ",
         paste(ogiltiga_typer, collapse = ", "),
-        ". Använd K för kommun eller R/L för region."
+        ". Anv\u00e4nd K f\u00f6r kommun eller R/L f\u00f6r region."
       )
     }
 
@@ -412,9 +412,9 @@ hamta_fran_kolada <- function(
 
     if (length(ogiltiga_kon) > 0) {
       stop(
-        "Ogiltigt värde för kön: ",
+        "Ogiltigt v\u00e4rde f\u00f6r k\u00f6n: ",
         paste(ogiltiga_kon, collapse = ", "),
-        ". Använd T, K eller M."
+        ". Anv\u00e4nd T, K eller M."
       )
     }
   }
@@ -582,7 +582,7 @@ hamta_fran_kolada <- function(
   if (nrow(data) == 0) {
 
     message(
-      "Ingen data hittades för de valda kriterierna."
+      "Ingen data hittades f\u00f6r de valda kriterierna."
     )
 
     return(data.frame())
@@ -607,12 +607,12 @@ hamta_fran_kolada <- function(
     if (length(saknade_ar) > 0) {
 
       message(
-        "Data saknas för följande år: ",
+        "Data saknas f\u00f6r f\u00f6ljande \u00e5r: ",
         paste(
           saknade_ar,
           collapse = ", "
         ),
-        ". Tillgängliga år har hämtats."
+        ". Tillg\u00e4ngliga \u00e5r har h\u00e4mtats."
       )
     }
   }
@@ -761,7 +761,7 @@ sok_nyckeltal <- function(
       any(!nzchar(sok))
     ) {
       stop(
-        "Sökningen får inte innehålla tomma värden."
+        "S\u00f6kningen f\u00e5r inte inneh\u00e5lla tomma v\u00e4rden."
       )
     }
   }
@@ -980,7 +980,7 @@ hamta_kommuner <- function(
           ogiltiga,
           collapse = ", "
         ),
-        ". Använd K för kommun eller R/L för region."
+        ". Anv\u00e4nd K f\u00f6r kommun eller R/L f\u00f6r region."
       )
     }
 
@@ -1142,7 +1142,7 @@ senaste_varde <- function(
     !is.logical(bortfall) ||
     is.na(bortfall)
   ) {
-    stop("'bortfall' måste vara TRUE eller FALSE.")
+    stop("'bortfall' m\u00e5ste vara TRUE eller FALSE.")
   }
 
   data <- hamta_fran_kolada(
@@ -1169,7 +1169,7 @@ senaste_varde <- function(
 
     if (nrow(data) == 0) {
       message(
-        "Inga observationer med ett faktiskt värde hittades."
+        "Inga observationer med ett faktiskt v\u00e4rde hittades."
       )
 
       return(
@@ -1272,15 +1272,15 @@ forandring <- function(
 
   # Kontrollera år
   if (missing(fran) || missing(till)) {
-    stop("Du måste ange både 'fran' och 'till'.")
+    stop("Du m\u00e5ste ange b\u00e5de 'fran' och 'till'.")
   }
 
   if (length(fran) != 1 || length(till) != 1) {
-    stop("'fran' och 'till' måste vara ett år vardera.")
+    stop("'fran' och 'till' m\u00e5ste vara ett \u00e5r vardera.")
   }
 
   if (fran == till) {
-    stop("'fran' och 'till' måste vara olika år.")
+    stop("'fran' och 'till' m\u00e5ste vara olika \u00e5r.")
   }
 
   # Hämta endast de två år som behövs
@@ -1293,7 +1293,7 @@ forandring <- function(
   )
 
   if (nrow(data) == 0) {
-    message("Ingen data hittades för de valda kriterierna.")
+    message("Ingen data hittades f\u00f6r de valda kriterierna.")
     return(data.frame())
   }
 
@@ -1393,7 +1393,7 @@ forandring <- function(
   if (nrow(saknade) > 0) {
     message(
       nrow(saknade),
-      " observation(er) saknar värde för ett av jämförelseåren."
+      " observation(er) saknar v\u00e4rde f\u00f6r ett av j\u00e4mf\u00f6relse\u00e5ren."
     )
   }
 
@@ -1494,15 +1494,15 @@ hamta_jamforelse <- function(
   # ---------------------------------------------------------
 
   if (missing(kommun)) {
-    stop("Du måste ange en kommun.")
+    stop("Du m\u00e5ste ange en kommun.")
   }
 
   if (length(kommun) != 1) {
-    stop("hamta_jamforelse() hanterar en kommun åt gången.")
+    stop("hamta_jamforelse() hanterar en kommun \u00e5t g\u00e5ngen.")
   }
 
   if (missing(ar)) {
-    stop("Du måste ange minst ett år.")
+    stop("Du m\u00e5ste ange minst ett \u00e5r.")
   }
 
   if (
@@ -1510,7 +1510,7 @@ hamta_jamforelse <- function(
     !is.logical(inkludera_grupp) ||
     is.na(inkludera_grupp)
   ) {
-    stop("'inkludera_grupp' måste vara TRUE eller FALSE.")
+    stop("'inkludera_grupp' m\u00e5ste vara TRUE eller FALSE.")
   }
 
   # Om verksamhet anges är jämförelsen per definition
@@ -1527,13 +1527,13 @@ hamta_jamforelse <- function(
     "lan",
     "kommungrupp",
     "liknande",
-    "invånarantal"
+    "inv\u00e5narantal"
   )
 
   if (!jamforelse %in% giltiga_jamforelser) {
     stop(
-      "Ogiltig jämförelse. Använd 'lan', 'kommungrupp', ",
-      "'liknande' eller 'invånarantal'."
+      "Ogiltig j\u00e4mf\u00f6relse. Anv\u00e4nd 'lan', 'kommungrupp', ",
+      "'liknande' eller 'inv\u00e5narantal'."
     )
   }
 
@@ -1602,7 +1602,7 @@ hamta_jamforelse <- function(
 
     vald_grupp <- kommun_grupper[
       grepl(
-        "läns kommuner.*ovägt medel",
+        "l\u00e4ns kommuner.*ov\u00e4gt medel",
         kommun_grupper$title,
         ignore.case = TRUE
       ),
@@ -1612,7 +1612,7 @@ hamta_jamforelse <- function(
 
     if (nrow(vald_grupp) == 0) {
       stop(
-        "Kunde inte hitta någon länsgrupp för ",
+        "Kunde inte hitta n\u00e5gon l\u00e4nsgrupp f\u00f6r ",
         kommun_namn,
         "."
       )
@@ -1624,8 +1624,8 @@ hamta_jamforelse <- function(
       drop = FALSE
     ]
 
-    jamforelse_namn <- "Övrig kommun i länet"
-    grupp_typ_namn <- "Länets kommuner"
+    jamforelse_namn <- "\u00d6vrig kommun i l\u00e4net"
+    grupp_typ_namn <- "L\u00e4nets kommuner"
   }
 
 
@@ -1636,15 +1636,15 @@ hamta_jamforelse <- function(
   if (jamforelse == "kommungrupp") {
 
     skr_grupper <- c(
-      "Storstäder",
-      "Pendlingskommun nära storstad",
-      "Större stad",
-      "Pendlingskommun nära större stad",
-      "Lågpendlingskommun nära större stad",
-      "Mindre stad/tätort",
-      "Pendlingskommun nära mindre stad/tätort",
+      "Storst\u00e4der",
+      "Pendlingskommun n\u00e4ra storstad",
+      "St\u00f6rre stad",
+      "Pendlingskommun n\u00e4ra st\u00f6rre stad",
+      "L\u00e5gpendlingskommun n\u00e4ra st\u00f6rre stad",
+      "Mindre stad/t\u00e4tort",
+      "Pendlingskommun n\u00e4ra mindre stad/t\u00e4tort",
       "Landsbygdskommun",
-      "Landsbygdskommun med besöksnäring"
+      "Landsbygdskommun med bes\u00f6ksn\u00e4ring"
     )
 
     skr_pattern <- paste(
@@ -1675,7 +1675,7 @@ hamta_jamforelse <- function(
 
     if (nrow(vald_grupp) == 0) {
       stop(
-        "Kunde inte identifiera någon SKR-kommungrupp för ",
+        "Kunde inte identifiera n\u00e5gon SKR-kommungrupp f\u00f6r ",
         kommun_namn,
         "."
       )
@@ -1686,7 +1686,7 @@ hamta_jamforelse <- function(
       # Föredra grupp med ovägt medel
       ovagt <- vald_grupp[
         grepl(
-          "ovägt medel",
+          "ov\u00e4gt medel",
           vald_grupp$title,
           ignore.case = TRUE
         ),
@@ -1705,7 +1705,7 @@ hamta_jamforelse <- function(
       drop = FALSE
     ]
 
-    jamforelse_namn <- "Övrig kommun i kommungruppen"
+    jamforelse_namn <- "\u00d6vrig kommun i kommungruppen"
     grupp_typ_namn <- "Kommungruppen"
   }
 
@@ -1714,11 +1714,11 @@ hamta_jamforelse <- function(
   # Invånarantal
   # ---------------------------------------------------------
 
-  if (jamforelse == "invånarantal") {
+  if (jamforelse == "inv\u00e5narantal") {
 
     vald_grupp <- kommun_grupper[
       grepl(
-        "^Kommuner med .*invånare.*\\(ovägt medel\\)$",
+        "^Kommuner med .*inv\u00e5nare.*\\(ov\u00e4gt medel\\)$",
         kommun_grupper$title,
         ignore.case = TRUE
       ),
@@ -1728,7 +1728,7 @@ hamta_jamforelse <- function(
 
     if (nrow(vald_grupp) == 0) {
       stop(
-        "Kunde inte hitta någon jämförelsegrupp efter invånarantal för ",
+        "Kunde inte hitta n\u00e5gon j\u00e4mf\u00f6relsegrupp efter inv\u00e5narantal f\u00f6r ",
         kommun_namn,
         "."
       )
@@ -1736,14 +1736,14 @@ hamta_jamforelse <- function(
 
     if (nrow(vald_grupp) > 1) {
       stop(
-        "Flera jämförelsegrupper efter invånarantal hittades för ",
+        "Flera j\u00e4mf\u00f6relsegrupper efter inv\u00e5narantal hittades f\u00f6r ",
         kommun_namn,
         "."
       )
     }
 
-    jamforelse_namn <- "Övrig kommun i invånargruppen"
-    grupp_typ_namn <- "Invånargruppen"
+    jamforelse_namn <- "\u00d6vrig kommun i inv\u00e5nargruppen"
+    grupp_typ_namn <- "Inv\u00e5nargruppen"
   }
 
 
@@ -1811,7 +1811,7 @@ hamta_jamforelse <- function(
 
     if (nrow(liknande_grupper) == 0) {
       stop(
-        "Inga grupper för liknande kommuner hittades för ",
+        "Inga grupper f\u00f6r liknande kommuner hittades f\u00f6r ",
         kommun_namn,
         "."
       )
@@ -1842,7 +1842,7 @@ hamta_jamforelse <- function(
     # ger annars ett tomt verksamhetsnamn
     verksamhetsnamn[
       verksamhetsnamn == ""
-    ] <- "övergripande"
+    ] <- "\u00f6vergripande"
 
     liknande_grupper$verksamhet <- verksamhetsnamn
 
@@ -1923,7 +1923,7 @@ hamta_jamforelse <- function(
 
       if (nrow(matchning) == 0) {
         stop(
-          "Ingen grupp för liknande kommuner hittades för verksamheten: ",
+          "Ingen grupp f\u00f6r liknande kommuner hittades f\u00f6r verksamheten: ",
           verksamhet
         )
       }
@@ -1952,7 +1952,7 @@ hamta_jamforelse <- function(
       )
 
       cat(
-        "\nVälj grupp för liknande kommuner för ",
+        "\nV\u00e4lj grupp f\u00f6r liknande kommuner f\u00f6r ",
         kommun_namn,
         ":\n\n",
         sep = ""
@@ -2177,7 +2177,7 @@ hamta_jamforelse <- function(
   )
 
   if (nrow(resultat) == 0) {
-    message("Ingen data hittades för jämförelsen.")
+    message("Ingen data hittades f\u00f6r j\u00e4mf\u00f6relsen.")
     return(data.frame())
   }
 
@@ -2321,19 +2321,19 @@ hamta_enheter <- function(
 ) {
 
   verksamhetskoder <- c(
-    "förskola" = "V11",
+    "f\u00f6rskola" = "V11",
     "grundskola" = "V15",
     "gymnasieskola" = "V17",
-    "hemtjänst" = "V21",
-    "särskilt boende" = "V23",
-    "lss boende med särskild service" = "V25",
+    "hemtj\u00e4nst" = "V21",
+    "s\u00e4rskilt boende" = "V23",
+    "lss boende med s\u00e4rskild service" = "V25",
     "lss daglig verksamhet" = "V26",
     "gruppbostad lss" = "V29",
     "servicebostad lss" = "V30",
-    "sol boendestöd" = "V31",
-    "sol boende med särskild service" = "V32",
-    "sol sysselsättning" = "V34",
-    "våld i nära relationer" = "V45",
+    "sol boendest\u00f6d" = "V31",
+    "sol boende med s\u00e4rskild service" = "V32",
+    "sol syssels\u00e4ttning" = "V34",
+    "v\u00e5ld i n\u00e4ra relationer" = "V45",
     "fastigheter" = "V60"
   )
 
@@ -2371,7 +2371,7 @@ hamta_enheter <- function(
       ) {
 
         stop(
-          "Okänd verksamhet: ",
+          "Ok\u00e4nd verksamhet: ",
           verksamhet,
           "."
         )
@@ -2520,7 +2520,7 @@ hamta_enheter <- function(
   if (nrow(enheter) == 0) {
 
     message(
-      "Inga enheter hittades för den valda verksamheten."
+      "Inga enheter hittades f\u00f6r den valda verksamheten."
     )
 
     return(
@@ -2559,7 +2559,7 @@ hamta_enheter <- function(
 
   if (nrow(enheter) == 0) {
     message(
-      "Inga aktuella enheter hittades för de valda kriterierna."
+      "Inga aktuella enheter hittades f\u00f6r de valda kriterierna."
     )
     return(
       data.frame()
@@ -2645,12 +2645,12 @@ hamta_enheter <- function(
     if (length(ogiltiga_kon) > 0) {
 
       stop(
-        "Ogiltigt värde för kön: ",
+        "Ogiltigt v\u00e4rde f\u00f6r k\u00f6n: ",
         paste(
           ogiltiga_kon,
           collapse = ", "
         ),
-        ". Använd T, K eller M."
+        ". Anv\u00e4nd T, K eller M."
       )
     }
   }
@@ -2792,7 +2792,7 @@ hamta_enheter <- function(
   if (nrow(enhetsdata) == 0) {
 
     message(
-      "Inga nyckeltalsvärden hittades för de valda kriterierna."
+      "Inga nyckeltalsv\u00e4rden hittades f\u00f6r de valda kriterierna."
     )
 
     return(
@@ -2816,7 +2816,7 @@ hamta_enheter <- function(
   if (nrow(enhetsdata) == 0) {
 
     message(
-      "Inga nyckeltalsvärden hittades för valt kön."
+      "Inga nyckeltalsv\u00e4rden hittades f\u00f6r valt k\u00f6n."
     )
 
     return(
@@ -3274,10 +3274,10 @@ get_comparison <- function(
     "municipality group" = "kommungrupp",
     "kommungrupp" = "kommungrupp",
 
-    "population" = "invånarantal",
-    "population_group" = "invånarantal",
-    "population group" = "invånarantal",
-    "invånarantal" = "invånarantal",
+    "population" = "inv\u00e5narantal",
+    "population_group" = "inv\u00e5narantal",
+    "population group" = "inv\u00e5narantal",
+    "inv\u00e5narantal" = "inv\u00e5narantal",
 
     "similar" = "liknande",
     "liknande" = "liknande",
@@ -3304,19 +3304,19 @@ get_comparison <- function(
     area_map <- c(
       "labour_market" = "arbetsmarknad",
       "labor_market" = "arbetsmarknad",
-      "economic_assistance" = "ekonomiskt bistånd",
+      "economic_assistance" = "ekonomiskt bist\u00e5nd",
       "leisure_time_centre" = "fritidshem",
       "leisure_time_center" = "fritidshem",
-      "preschool" = "förskola",
+      "preschool" = "f\u00f6rskola",
       "compulsory_school" = "grundskola",
       "upper_secondary_school" = "gymnasieskola",
       "individual_and_family_care" = "IFO",
       "ifo" = "IFO",
       "lss" = "LSS",
-      "rescue_service" = "räddningstjänst",
+      "rescue_service" = "r\u00e4ddningstj\u00e4nst",
       "socioeconomic" = "socioekonomi",
-      "elderly_care" = "äldreomsorg",
-      "overall" = "övergripande"
+      "elderly_care" = "\u00e4ldreomsorg",
+      "overall" = "\u00f6vergripande"
     )
 
     if (area_lower %in% names(area_map)) {
@@ -3371,16 +3371,16 @@ get_comparison <- function(
     dplyr::mutate(
       comparison_type = dplyr::case_when(
         comparison_type == "Vald kommun" ~ "Selected municipality",
-        comparison_type == "Övrig kommun i länet" ~ "Other municipality in county",
-        comparison_type == "Länets kommuner" ~ "County municipalities",
-        comparison_type == "Övrig kommun i kommungruppen" ~
+        comparison_type == "\u00d6vrig kommun i l\u00e4net" ~ "Other municipality in county",
+        comparison_type == "L\u00e4nets kommuner" ~ "County municipalities",
+        comparison_type == "\u00d6vrig kommun i kommungruppen" ~
           "Other municipality in municipality group",
         comparison_type == "Kommungruppen" ~ "Municipality group",
         comparison_type == "Liknande kommun" ~ "Similar municipality",
         comparison_type == "Liknande kommuner" ~ "Similar municipalities",
-        comparison_type == "Övrig kommun i invånargruppen" ~
+        comparison_type == "\u00d6vrig kommun i inv\u00e5nargruppen" ~
           "Other municipality in population group",
-        comparison_type == "Invånargruppen" ~ "Population group",
+        comparison_type == "Inv\u00e5nargruppen" ~ "Population group",
         TRUE ~ as.character(comparison_type)
       )
     )
@@ -3520,7 +3520,7 @@ get_units <- function(
 
       activity_map <- c(
         "preschool" =
-          "förskola",
+          "f\u00f6rskola",
 
         "compulsory_school" =
           "grundskola",
@@ -3535,22 +3535,22 @@ get_units <- function(
           "gymnasieskola",
 
         "home_care" =
-          "hemtjänst",
+          "hemtj\u00e4nst",
 
         "home care" =
-          "hemtjänst",
+          "hemtj\u00e4nst",
 
         "special_housing_elderly" =
-          "särskilt boende",
+          "s\u00e4rskilt boende",
 
         "special housing elderly" =
-          "särskilt boende",
+          "s\u00e4rskilt boende",
 
         "lss_special_service_housing" =
-          "lss boende med särskild service",
+          "lss boende med s\u00e4rskild service",
 
         "lss special service housing" =
-          "lss boende med särskild service",
+          "lss boende med s\u00e4rskild service",
 
         "lss_daily_activity" =
           "lss daglig verksamhet",
@@ -3571,28 +3571,28 @@ get_units <- function(
           "servicebostad lss",
 
         "social_services_housing_support" =
-          "sol boendestöd",
+          "sol boendest\u00f6d",
 
         "social services housing support" =
-          "sol boendestöd",
+          "sol boendest\u00f6d",
 
         "social_services_special_housing" =
-          "sol boende med särskild service",
+          "sol boende med s\u00e4rskild service",
 
         "social services special housing" =
-          "sol boende med särskild service",
+          "sol boende med s\u00e4rskild service",
 
         "social_services_employment" =
-          "sol sysselsättning",
+          "sol syssels\u00e4ttning",
 
         "social services employment" =
-          "sol sysselsättning",
+          "sol syssels\u00e4ttning",
 
         "domestic_violence" =
-          "våld i nära relationer",
+          "v\u00e5ld i n\u00e4ra relationer",
 
         "domestic violence" =
-          "våld i nära relationer",
+          "v\u00e5ld i n\u00e4ra relationer",
 
         "properties" =
           "fastigheter",
@@ -3646,7 +3646,7 @@ get_units <- function(
     resultat <- resultat |>
       dplyr::mutate(
         unit_type_name = dplyr::case_when(
-          unit_type_name == "förskola" ~
+          unit_type_name == "f\u00f6rskola" ~
             "preschool",
 
           unit_type_name == "grundskola" ~
@@ -3655,14 +3655,14 @@ get_units <- function(
           unit_type_name == "gymnasieskola" ~
             "upper secondary school",
 
-          unit_type_name == "hemtjänst" ~
+          unit_type_name == "hemtj\u00e4nst" ~
             "home care",
 
-          unit_type_name == "särskilt boende" ~
+          unit_type_name == "s\u00e4rskilt boende" ~
             "special housing, elderly",
 
           unit_type_name ==
-            "lss boende med särskild service" ~
+            "lss boende med s\u00e4rskild service" ~
             "LSS housing with special services",
 
           unit_type_name ==
@@ -3678,19 +3678,19 @@ get_units <- function(
             "LSS service home",
 
           unit_type_name ==
-            "sol boendestöd" ~
+            "sol boendest\u00f6d" ~
             "Social Services housing support",
 
           unit_type_name ==
-            "sol boende med särskild service" ~
+            "sol boende med s\u00e4rskild service" ~
             "Social Services housing with special services",
 
           unit_type_name ==
-            "sol sysselsättning" ~
+            "sol syssels\u00e4ttning" ~
             "Social Services employment",
 
           unit_type_name ==
-            "våld i nära relationer" ~
+            "v\u00e5ld i n\u00e4ra relationer" ~
             "domestic violence",
 
           unit_type_name ==
