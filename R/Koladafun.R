@@ -2533,7 +2533,7 @@ hamta_enheter <- function(
   # Lägg till verksamhetsnamn
   # ---------------------------------------------------------
 
-  kod_till_namn <- setNames(
+  kod_till_namn <- stats::setNames(
     names(verksamhetskoder),
     verksamhetskoder
   )
